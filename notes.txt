@@ -1,0 +1,51 @@
+http://www.puzzlers.org/pub/wordlists/ospd.txt
+
+data
+
+array of words
+
+array of letters
+
+score
+
+level
+
+achievements
+
+
+
+
+PLAN
+——————
+word find actions
+scoring
+letter generation priorities?
+design
+
+
+
+
+
+
+
+
+
+CORDOVA
+——————————————
+Steps so far
+setup dir structure
+install cordova globally : sudo npm install -g cordova
+
+create the app(creates a dir called build): cordova create build com.build.wordio Wordio
+
+all further cordova commands are run from build dir
+
+add platforms such as android, iOS - these SDKs need to already be installed on machine
+
+add prefs to config.xml
+
+run: cordova build <platform>
+
+
+
+
