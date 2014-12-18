@@ -18,9 +18,15 @@ module.exports = function(grunt) {
 			}
 		},
 		copy:{
-			files:{
+			index:{
 				src:'src/views/index.html',
 				dest:'build/www/index.html'
+			},
+			fonts:{
+				expand:true,
+				cwd:'assets/font/',
+				src:'**',
+				dest:'build/www/font/'
 			}
 		},
 		sass:{

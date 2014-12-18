@@ -33,6 +33,9 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			for(i = 0;i < (globals.tileSettings.row*globals.tileSettings.column);i++) {
 				this.assignLetters(i);
 			}
+			if(globals.debug===1) {
+				break;
+			}
 		}
 		for(i = 0;i < (globals.tileSettings.row*globals.tileSettings.column);i++) {
 			grid.add(globals.letter[i]);
@@ -40,20 +43,41 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		this.positionTiles();
 	},
 	assignLetters: function(i) {
-		
-		this.rand = Math.floor((Math.random()*10)+1);
+		if(globals.debug===1) {
+			if(globals.debugTiles[i]=="?") {
+				globals.letter[i].set({type:'r',value:""});
+			} else {
+				globals.letter[i].set({type:'c',value:globals.debugTiles[i]});
+			}
+			
 
-		if(this.rand>=7 && this.rand<10) {
+		}  else if(globals.debug===2 && $(".tile").length > 0) {
+			if(globals.debugCounter<globals.debugDropIn.length) {
+				globals.letter[i].set({type:'c',value:globals.debugDropIn[globals.debugCounter++]});
+			} else {
+				globals.letter[i].set({type:'c',value:"X"});
+			}
+			
 
-			globals.letter[i].set({type:'v',value:this.getVowel()});
-		} else if(this.rand<7) {
-
-			globals.letter[i].set({type:'c',value:this.getConsonant()});
 		} else {
+			
+			this.rand = Math.floor((Math.random()*100)+1);
 
-			globals.letter[i].set({type:'r',value:""});
+			if(this.rand>=60 && this.rand<=90) {
+
+				globals.letter[i].set({type:'v',value:this.getVowel()});
+			} else if(this.rand<60) {
+				if(this.rand<6) {
+					globals.letter[i].set({type:'c',value:this.getConsonant(2)});
+				} else {
+					globals.letter[i].set({type:'c',value:this.getConsonant(1)});
+				}
+
+			} else {
+
+				globals.letter[i].set({type:'r',value:""});
+			}
 		}
-
 	},
 	positionTiles:function() {
 		var top = 0;
@@ -61,7 +85,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		var z = 0;
 
 		$(".tile").each(function(i) {
-			$(this).attr('id',i).addClass("mover").css({"font-size":(globals.tileSettings.tileSize*0.45)+"px","line-height":globals.tileSettings.tileSize+"px","width":globals.tileSettings.tileSize+"px","height":globals.tileSettings.tileSize+"px","top":top+"px","left":left+"px"});
+			$(this).attr('id',i).addClass("mover").css({"font-size":(globals.tileSettings.tileSize*0.48)+"px","line-height":globals.tileSettings.tileSize+"px","width":globals.tileSettings.tileSize+"px","height":globals.tileSettings.tileSize+"px","top":top+"px","left":left+"px"});
 			z++;
 
 			//left += globals.tileSettings.tileSize;
@@ -86,23 +110,27 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 	getVowel:function() {
 		return globals.vowels[Math.floor(Math.random()*5)];
 	},
-	getConsonant:function() {
-		return globals.consonants[Math.floor(Math.random()*21)];
+	getConsonant:function(carrot) {
+
+		return globals.consonants[carrot][Math.floor(Math.random()*globals.consonants[carrot].length)];
 	},
 	appendLetter:function(letter) {
 		var tmpl = this.templates.tile;
-		var className;
+		var className = "",
+			pointsGroup = 0;
 		if(letter.get("type")=="r") {
 			className = "random";
+		} else {
+			pointsGroup = "group" + globals.letterProperties[letter.get("value")].point;
 		}
-		this.$el.find(".grid").append(_.template(tmpl,{letter:letter.get("value"),className:className}));
+		this.$el.find(".grid").append(_.template(tmpl,{letter:letter.get("value"),className:className,pointsGroup:pointsGroup}));
 	},
 	updateLetter:function(letter) {
 		console.log(letter);
 	},
 	hasWord:function(canHandleFound) {
 		globals.canMove = false;
-		var i = 0;
+		/*var i = 0;
 		var z = 0;
 		var j = 0;
 		var p = 0;
@@ -113,7 +141,27 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		var canCompleteLine = true;
 		var vertical = false;
 		var wordPos = 0;
+		var hasFound = false;
 
+
+		var foundWords = [];
+		var f = 0;*/
+		var i = 0,
+			z = 0,
+			j = 0,
+			p = 0,
+			k = 0,
+			wordPos = 0,
+			f = 0,
+			word = "",
+			fromDic = "",
+			tmp = "",
+			canCompleteLine = true,
+			vertical = false,
+			hasFound = false,
+			foundWords = [];
+
+		//horizontal search
 		//7 is number of rows
 		for(;i<35;i++) {
 			z++;
@@ -130,9 +178,11 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				}
 			} else if(canCompleteLine===true) {
 				word += globals.letter[i].get('value');
+				//console.log(globals.letter[i].get('value'));
 			}
 			
 			if((i+1)%5===0) {
+				
 				canCompleteLine = true;
 				z = p = 0;
 
@@ -145,6 +195,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 						fromDic = tmp;
 						j+=p;
 						wordPos = j;
+
+						foundWords[f] = {
+							word:fromDic,
+							pos:wordPos,
+							len:fromDic.length,
+							vertical:false
+						};
+						hasFound = true;
 					}
 					p++;
 					word = word.substring(1);
@@ -167,7 +225,11 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		//vertical search
 		k = z = j = p = 0;
 		word = "";
+		fromDic = "";
 		canCompleteLine = true;
+		if(hasFound) {
+			f++;
+		}
 		for(i=0;i<35;i++) {
 			z++;
 			if(globals.letter[k].get('type')=="r") {
@@ -184,6 +246,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 							fromDic = tmp;
 							vertical = true;
 							wordPos = k-15;
+
+							foundWords[f] = {
+								word:fromDic,
+								pos:k-15,
+								len:fromDic.length,
+								vertical:true
+							};
+							hasFound = true;
 
 						}
 					}
@@ -209,6 +279,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 						j+=p;
 						wordPos = j;
 						vertical = true;
+
+						foundWords[f] = {
+							word:fromDic,
+							pos:j,
+							len:fromDic.length,
+							vertical:true
+						};
+						hasFound = true;
 					}
 					p+=5;
 					word = word.substring(1);
@@ -230,36 +308,47 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		}
 
 
-		if(fromDic.length>0 && canHandleFound===true) {
+		if(hasFound===true && canHandleFound===true) {
 			console.log(fromDic,wordPos,vertical);
 			//possibley move this to model
-			$(".top-bar").html(fromDic);
+			
 			$(".grid").addClass("shift");
-			this.handleFound(wordPos,fromDic.length,vertical);
+			console.log(foundWords);
+			//this.handleFound(wordPos,fromDic.length,vertical);
+			this.handleFound(foundWords);
+		} else {
+			globals.canMove = true;
 		}
-
-		globals.canMove = true;
+		
 		return false;
 
 	},
 	checkForWord:function(word) {
-		var letter = word.charAt(0);
-		var c = dictionary[letter].length;
-		var i = 0;
-		var longestWord = "";
-		for(;i<c;i++) {
-			//console.log(dictionary[letter][i]);
-			if(word.indexOf(dictionary[letter][i])===0) {
+		
+		var letter = word.charAt(0),
+			c,
+			i = 0,
+			longestWord = "";
 
-				if(dictionary[letter][i].length > longestWord.length) {
-					longestWord = dictionary[letter][i];
+		if(letter!="?") {
+			c = dictionary[letter].length;
+
+			for(;i<c;i++) {
+				//console.log(dictionary[letter][i]);
+				if(word.indexOf(dictionary[letter][i])===0) {
+
+					if(dictionary[letter][i].length > longestWord.length) {
+						longestWord = dictionary[letter][i];
+					}
 				}
 			}
 		}
 		return longestWord;
 	},
-	handleFound:function(pos,len,vertical) {
-		
+	
+	handleFound:function(foundWords) {
+	//handleFound:function(pos,len,vertical) {
+		/*
 		var i = pos;
 		var k = pos;
 		var j = 0;
@@ -268,150 +357,295 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		var mRowCount = rowCount*5;
 		var l = len;
 		len+=i;
-		
-		for(;i<len;i++) {	
-			if(vertical===true) {
-				$("#"+k).removeClass("mover").addClass("tmp-bg");
+*/
+//foundWords[1] is vertical
+		globals.canMove = false;
+		var p = 0,fwl = foundWords.length,
+		i,k,len,j,row = 5,rowCount = [0,0],
+		mRowCount,l,crossOver = false,
+		time1 = 1010,word = "",checkForWord = true;
 
-				k+=5;	
-			} else {
-				$("#"+i).removeClass("mover").addClass("tmp-bg");
-				
+		if(fwl>1) {
+			//if words are joined - find cross over number
+			crossOver = foundWords[1].pos+(Math.ceil((foundWords[0].pos-foundWords[1].pos)/5)*5);
+			
+
+			if(foundWords[1].pos>(foundWords[0].pos+(foundWords[0].len-1)) || crossOver<0 || crossOver>(((foundWords[1].len-1)*5)+foundWords[1].pos) || (foundWords[0].pos+(foundWords[0].len-1))<crossOver) {
+				crossOver = false;
+				fwl = 1;
 			}
 		}
-		setTimeout(function() {
-			for(i = k = pos;i<len;i++) {
-				if(vertical===true) {
-					$("#"+k).addClass("shrink");
+		console.log(crossOver);
+		if(fwl>1) {
+			$(".top-bar").html(foundWords[0].word + " & " + foundWords[1].word);
+		} else {
+			$(".top-bar").html(foundWords[0].word);
+		}
+		console.log("cross over: " + crossOver);
+
+		for(;p<fwl;p++) {
+			i = k = foundWords[p].pos;
+			len = foundWords[p].len+i;
+			rowCount[p] = Math.floor(i/5);
+			
+			for(;i<len;i++) {	
+				if(foundWords[p].vertical===true) {
+					$("#"+k).removeClass("mover").addClass("tmp-bg");
 
 					k+=5;
 				} else {
-					$("#"+i).addClass("shrink");
-
+					$("#"+i).removeClass("mover").addClass("tmp-bg");
+					
 				}
 			}
+		}
+		
+		setTimeout(function() {
+			for(p = 0;p<fwl;p++) {
+				i = k = foundWords[p].pos;
+				len = foundWords[p].len+i;
 
-			setTimeout(function() {
-				for(i = k = pos;i<len;i++) {
-					if(vertical===true) {
-						j = k-(rowCount*5);
+				for(;i<len;i++) {
+					if(foundWords[p].vertical===true) {
+						$("#"+k).addClass("shrink");
 
-						$("#"+k).css("top",((l*globals.tileSettings.tileSize)*-1)).removeClass("random shrink tmp-bg");
-						
-						$("#"+k).attr("id",j+"tmp");
-
-						l--;
 						k+=5;
 					} else {
-						$("#"+i).css("top",-globals.tileSettings.tileSize).removeClass("random shrink tmp-bg");
+						$("#"+i).addClass("shrink");
 
-						$("#"+i).attr("id",(i-mRowCount)+"tmp");
 					}
 				}
-				//the time to shrink
-			},500);
+			}
+			
+
+			
 			//the time to go red
 		},500);
 
 
 
-		//part 2
-		if(rowCount>0) {
-			var dRow = row;
-			var tmp = [];
+
 			setTimeout(function() {
-				k = pos;
-				l = len-pos;
-				//shift tiles down
-				while(rowCount) {
-					if(vertical===true) {
-						k-=5;
-						dRow = (l*5)+k;
-						
-						$("#"+k).css("top",(Math.floor(dRow/5))*globals.tileSettings.tileSize).attr("id",dRow);
+				for(p = 0;p<fwl;p++) {
+					i = k = foundWords[p].pos;
+					len = foundWords[p].len+i;
 
-						tmp[k] = globals.letter[dRow];
+					mRowCount = rowCount[p]*5;
+					l = foundWords[p].len;
 
-						globals.letter[dRow] = globals.letter[k];
+					for(;i<len;i++) {
+						if(foundWords[p].vertical===true) {
 
-						globals.letter[k] = tmp[k];
-					} else {
-						i = pos;
-						k = pos - dRow;
-						for(;i<len;i++) {
-							console.log(k);
-							$("#"+k).css("top",((Math.floor(k/5)+1)*globals.tileSettings.tileSize)).attr("id",k+5);
-							//if first sweep - store in temp
-							//if last assign temp to 0 row
-							if(dRow==row) {
-								//this is the first sweep
-								tmp[i] = globals.letter[k+5];
+							$("#"+k).css("top",((l*globals.tileSettings.tileSize)*-1)).removeClass("random shrink tmp-bg");
+							
+							$("#"+k).attr("id",(k-mRowCount)+"tmp");
+
+							l--;
+							k+=5;
+						} else {
+							if(i!==crossOver) {
+								$("#"+i).css("top",-globals.tileSettings.tileSize).removeClass("random shrink tmp-bg");
+
+								$("#"+i).attr("id",(i-mRowCount)+"tmp");
 							}
-							globals.letter[k+5] = globals.letter[k];
+							
 
-							if(rowCount===1) {
-								globals.letter[k] = tmp[i];
-							}
-							k++;
 						}
-						dRow += row;
 					}
-
-
-					rowCount--;
 				}
-				//the time to go red and shrink - plus small delay
-			},1100);
+				//the time to shrink
+			},1000);
+
+
+
+
+//if rowCount OR rowCount2 are greater than 0
+
+		//part 2
+		if(rowCount[0] > 0 || rowCount[1] > 0) {
+			time1 = 1500;
+			setTimeout(function() {
+				for(p = 0;p<fwl;p++) {
+
+					if(rowCount[p]>0) {
+						var dRow = row,tmp = [],rowZ = rowCount[p];
+						i = foundWords[p].pos;
+						k = i;
+						l = foundWords[p].len;
+						len = foundWords[p].len+i;
+
+						//shift tiles down
+						while(rowZ) {
+							if(foundWords[p].vertical===true) {
+								k-=5;
+								dRow = (l*5)+k;
+								
+								$("#"+k).css("top",(Math.floor(dRow/5))*globals.tileSettings.tileSize).attr("id",dRow);
+
+								tmp[k] = globals.letter[dRow];
+
+								globals.letter[dRow] = globals.letter[k];
+
+								globals.letter[k] = tmp[k];
+							} else {
+								
+								i = foundWords[p].pos;
+								k = i - dRow;
+								for(;i<len;i++) {
+									//if theres a cross over - all tiles above the cross over should be handled by the vertical sweep?	
+									if(i!==crossOver) {
+									$("#"+k).css("top",((Math.floor(k/5)+1)*globals.tileSettings.tileSize)).attr("id",k+5);
+									//if first sweep - store in temp
+									//if last assign temp to 0 row
+									if(dRow==row) {
+										//this is the first sweep
+										tmp[i] = globals.letter[k+5];
+									}
+									globals.letter[k+5] = globals.letter[k];
+
+									if(rowZ===1) {
+										globals.letter[k] = tmp[i];
+									}
+									}
+									k++;
+								}
+								dRow += row;
+							}
+
+
+							rowZ--;
+						}
+						//the time to go red and shrink - plus small delay
+						
+					}
+				}
+				//look at this 1010 originally
+			},1010);
 		}
+
 
 		//part 3
 		//set tmp IDs back to regular values
 		setTimeout(function(self) {
-			i = pos;
-			for(;i<len;i++) {
+			for(p = 0;p<fwl;p++) {
 
-				if(vertical===true) {
-					
-					self.assignLetters(j);
-					$("#"+j+"tmp").html(globals.letter[j].get("value"));
-					if(globals.letter[j].get("type")=="r") {
-						$("#"+j+"tmp").addClass("random");
+				while(checkForWord) {
+
+					i = k = foundWords[p].pos;
+					len = foundWords[p].len+i;
+
+					mRowCount = rowCount[p]*5;
+					word = "";
+
+					for(;i<len;i++) {
+
+						if(foundWords[p].vertical===true) {
+							
+							j = k-mRowCount;
+
+							console.log("J1 " + j);
+
+							self.assignLetters(j);
+							if(globals.letter[j].get("type")=="r") {
+								word += "?";
+							} else {
+								word += globals.letter[j].get("value");
+							}
+
+							k+=5;
+							
+						} else {
+							//console.log(i + "gg " + (i-mRowCount));
+							if(i!==crossOver) {
+								//asign new letters
+								self.assignLetters((i-mRowCount));
+								if(globals.letter[(i-mRowCount)].get("type")=="r") {
+									word += "?";
+								} else {
+									word += globals.letter[(i-mRowCount)].get("value");
+								}
+								
+							}
+						}
 					}
-					$("#" + j + "tmp").addClass("mover").css("top",Math.floor(j/5)*globals.tileSettings.tileSize).attr("id",j);
-					
-
-					j-=5;
-				} else {
-
-					//asign new letters
-					self.assignLetters((i-mRowCount));
-					$("#"+(i-mRowCount)+"tmp").html(globals.letter[(i-mRowCount)].get("value"));
-
-					if(globals.letter[(i-mRowCount)].get("type")=="r") {
-						$("#"+(i-mRowCount)+"tmp").addClass("random");
+					checkForWord = false;
+					//check word in dic
+					//checkForWord = false if no word
+					console.log("new tiles " + word);
+					while(word.length>2) {
+						if(self.checkForWord(word).length) {
+							//keep the loop going if theres a word
+							checkForWord = true;
+							console.log("there was a word in the new tiles");
+							word = "";
+						} else {
+							word = word.substring(1);
+						}
+						
 					}
 
-					$("#"+(i-mRowCount)+"tmp").addClass("mover").css("top","0px").attr("id",(i-mRowCount));
 				}
+				checkForWord = true;
+				i = k = foundWords[p].pos;
+				len = foundWords[p].len+i;
+
+				mRowCount = rowCount[p]*5;
+				for(;i<len;i++) {
+					if(foundWords[p].vertical===true) {
+							
+						j = k-mRowCount;
+						console.log("J2 " + j);
+						$("#"+j+"tmp").html(globals.letter[j].get("value"));
+
+						if(globals.letter[j].get("type")=="r") {
+							$("#"+j+"tmp").attr("data-points","0").addClass("random");
+						} else {
+							$("#" + j + "tmp").attr("data-points","group" + globals.letterProperties[globals.letter[j].get("value")].point);
+						}
+						$("#" + j + "tmp").addClass("mover").css("top",Math.floor(j/5)*globals.tileSettings.tileSize).attr("id",j);
+
+						k+=5;
+					} else {
+						if(i!==crossOver) {
+
+							$("#"+(i-mRowCount)+"tmp").html(globals.letter[(i-mRowCount)].get("value"));
+
+							if(globals.letter[(i-mRowCount)].get("type")=="r") {
+								$("#"+(i-mRowCount)+"tmp").attr("data-points","0").addClass("random");
+							} else {
+								$("#"+(i-mRowCount)+"tmp").attr("data-points","group" + globals.letterProperties[globals.letter[(i-mRowCount)].get("value")].point);
+							}
+
+							$("#"+(i-mRowCount)+"tmp").addClass("mover").css("top","0px").attr("id",(i-mRowCount));
+
+						}
+					}
+				}
+
 			}
-			console.log(globals.letter);
+			//console.log(globals.letter);
 		
-			setTimeout(function() {
-				globals.canMove = true;
-				$(".grid").removeClass("shift");
-				self.hasWord(true);
-			},400);
+
 
 			//the time to go red and shrink plus small delay plus time to shift higher tiles down
-		},1500,this);
-		
+		},time1,this);
+
+
+		setTimeout(function(self) {
+			//globals.canMove = true;
+			$(".grid").removeClass("shift");
+			if(globals.debug!==1 && globals.debug!==2) {
+				self.hasWord(true);
+			}
+
+		},time1+400,this);
 	},
 	templates: {
 		grid:'\
 		<div class="grid"></div><a href="javascript:location.reload();">Refresh</a>\
 		',
 		tile:'\
-		<div class="tile <%= className %>"><%= letter %></div>\
+		<div data-points="<%= pointsGroup %>" class="tile <%= className %>"><%= letter %></div>\
 		',
 		topBar:'\
 		<div class="top-bar"><div class="found-word"></div></div>\

@@ -24,6 +24,8 @@ var DragMixin = {
 		if(globals.canMove===false) {
 			return false;
 		}
+		this.dragEnd();
+		
 		this.ended = false;
 		
 		this.targ = $(e.target);
@@ -198,24 +200,20 @@ var DragMixin = {
 	},
 	swapValues: function() {
 		
-
-
 		this.tmpVal = globals.letter[this.currentID];
 
 		globals.letter[this.currentID] = globals.letter[this.tmpID];
 
 		globals.letter[this.tmpID] = this.tmpVal;
 
-
 		if(globals.letter[this.currentID].get('type')=="r" && globals.letter[this.tmpID].get('type')!="r") {
-
 
 			this.tmpVal = this.getNextLetter(globals.letter[this.tmpID].get('value'));
 
 			globals.letter[this.currentID].set(this.tmpVal);
 
-			$("#"+this.currentID).html(this.tmpVal.value);
 
+			$("#"+this.currentID).removeClass("random").attr("data-points","group" + globals.letterProperties[this.tmpVal.value].point).html(this.tmpVal.value);
 
 
 		} else if (globals.letter[this.tmpID].get('type')=="r" && globals.letter[this.currentID].get('type')!="r") {
@@ -224,11 +222,9 @@ var DragMixin = {
 
 			globals.letter[this.tmpID].set(this.tmpVal);
 
-			this.targ.html(this.tmpVal.value);
-
+			this.targ.removeClass("random").attr("data-points","group" + globals.letterProperties[this.tmpVal.value].point).html(this.tmpVal.value);
 
 		}
-
 
 		globals.canMove = true;
 		

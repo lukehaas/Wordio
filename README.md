@@ -22,7 +22,19 @@ scoring
 letter generation priorities?
 design
 
+sounds
+points
+levels
+effects
 
+make sure first row never creates a new word on slide-in
+
+eaiou - 1
+nrtls - 2
+bcmp - 3
+fhwy - 4
+kjv - 5
+qzx - 6
 
 
 
@@ -45,7 +57,10 @@ add platforms such as android, iOS - these SDKs need to already be installed on 
 add prefs to config.xml
 
 run: cordova build <platform>
+————
 
+Add plugins:
+$ cordova plugin add org.apache.cordova.statusbar
 
 
 

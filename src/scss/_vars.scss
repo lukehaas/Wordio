@@ -1,0 +1,13 @@
+/* COLOURS */
+$white:#FFF;
+
+
+
+/* FONTS */
+
+$clear-sans-regular: 'clear-sans-regular';
+@font-face {
+  font-family: 'clear-sans-regular';
+  src: url('../font/clearsans/WOFF/ClearSans-Regular.woff') format('woff'),
+       url('../font/clearsans/TTF/ClearSans-Regular.ttf') format('truetype');
+}

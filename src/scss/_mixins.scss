@@ -1,0 +1,60 @@
+@mixin tile-point-value($points) {
+	position:absolute;
+	bottom:0.3em;
+	right:0.5em;
+	content:$points;
+	font-size:0.37em;
+	line-height:1;
+}
+/*
+@mixin slight-radial-gradient($colour) {
+	background:$colour;
+	background: -webkit-radial-gradient(lighten($colour,10%) 0%,$colour 100%);
+	background: -o-radial-gradient(lighten($colour,10%) 0%,$colour 100%);
+	background: -moz-radial-gradient(lighten($colour,10%) 0%,$colour 100%);
+	background: radial-gradient(lighten($colour,10%) 0%,$colour 100%);
+}*/
+
+@mixin slight-radial-gradient($colour) {
+background-color: $colour;
+/*background-image: linear-gradient(45deg, darken($colour,50%) 25%, transparent 25%, transparent 75%, darken($colour,50%) 75%, darken($colour,50%)), 
+linear-gradient(45deg, darken($colour,50%) 25%, transparent 25%, transparent 75%, darken($colour,50%) 75%, darken($colour,50%));
+background-size:50% 50%;
+background-position:0 0, 25% 25%;*/
+
+
+
+
+
+
+}
+/*
+@function darken-or-lighten($colour) {
+	$r:random(15);
+
+	@if $r <= 5 {
+		@return darken($colour,random(6));
+	} @else if $r<=10 {
+		@return lighten($colour,random(6));
+	} @else {
+		@return $colour;
+	}
+}*/
+@function darken-or-lighten() {
+	$r:random(15);
+	@if $r <= 5 {
+		@return rgba(0,0,0,(random(3)+1)/100);
+	} @else if $r<=10 {
+		@return rgba(255,255,255,(random(25)+1)/100);
+	} @else {
+		@return transparent;
+	}
+}
+@for $i from 1 to 35 {
+	.tile:not(.random):nth-child(#{$i}) {
+		background-image:linear-gradient(to right, darken-or-lighten() 50%,darken-or-lighten() 50%),linear-gradient(to right, darken-or-lighten() 50%,darken-or-lighten() 50%);
+		background-position:0 0,0 100%;
+		background-size:100% 50%,100% 50%;
+		background-repeat:no-repeat, no-repeat;
+	}
+}
