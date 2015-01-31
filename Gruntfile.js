@@ -86,6 +86,6 @@ module.exports = function(grunt) {
   	grunt.registerTask('js', ['jshint','concat','uglify']);
   	grunt.registerTask('build', ['style','js']);
 
-  	grunt.registerTask('default', ['copy','style','js','watch']);
+  	grunt.registerTask('default', ['svgmin','copy','style','js','watch']);
 
 };

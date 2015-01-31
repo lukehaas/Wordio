@@ -71,7 +71,18 @@ globals = {
     "X","?","X","X","X",
     "X","X","?","?","X"],
     debugDropIn:["P","U","T"],
-    debugCounter:0
+    debugCounter:0,
+    found:false,
+    wordLookup:"http://www.collinsdictionary.com/dictionary/english/",
+    currentScore:0,
+    intro:false,
+    tileSlectionEnabled:false,
+    chosenBlank:null,
+    timeLeft:150,
+    //timeLeft:5,
+    mainTimer:null,
+    paused:false,
+    cssPrefix:""
 };
 
 var App = {
@@ -92,15 +103,18 @@ var App = {
     // 'load', 'deviceready', 'offline', and 'online'.
     bindEvents: function() {
         document.addEventListener('deviceready', this.onDeviceReady, false);
-        $(this.onDeviceReady);
+        if (!window.cordova) {
+            $(this.onDeviceReady);
+        }
     },
     // deviceready Event Handler
     //
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
+        
         var w = parseInt($(".app").width()/globals.tileSettings.row);
-        var h = parseInt(($(".app").height()*0.9)/globals.tileSettings.column);
+        var h = parseInt(($(".app").height()*0.75)/globals.tileSettings.column);
 
         globals.tileSettings.tileSize = Math.min(w,h);
         
@@ -109,6 +123,9 @@ var App = {
         letterGridView = new App.Views.LetterGridView();
 
         wordioRouter = new App.Routers.WordioRouter({});
+
+        util.loadSounds();
+        util.setCSSPrefix();
 
         App.start();
 

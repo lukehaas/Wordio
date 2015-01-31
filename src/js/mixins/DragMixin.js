@@ -19,14 +19,16 @@ var DragMixin = {
 	currentPlaceX:0,
 	currentPlaceY:0,
 	currentID:false,
+	swapped:false,
 	dragStart: function(e) {
 		//e.preventDefault();
 		if(globals.canMove===false) {
 			return false;
 		}
-		this.dragEnd();
+		this.handleDragEnd();
 		
 		this.ended = false;
+		this.swapped = false;
 		
 		this.targ = $(e.target);
 
@@ -118,7 +120,7 @@ var DragMixin = {
 						this.currentPlaceX = this.tmpX;
 					}
 				} else {
-					this.dragEnd();
+					this.handleDragEnd();
 				}
 			} else {
 				this.y2 = this.targY + (this.pointers(e).y-this.y);
@@ -162,7 +164,7 @@ var DragMixin = {
 
 					}
 				} else {
-					this.dragEnd();
+					this.handleDragEnd();
 				}
 			}
 		}
@@ -181,8 +183,15 @@ var DragMixin = {
 		}
 	},
 	dragEnd: function(e) {
-		//e.preventDefault();
+		
 
+		this.handleDragEnd();
+		if(this.swapped) {
+			util.playSound(0);
+		}
+		
+	},
+	handleDragEnd:function() {
 		if(this.targ) {
 			globals.canMove = false;
 			this.targ.removeClass('top').addClass('mover').attr('id',this.currentID).css({'left':this.currentPlaceX,'top':this.currentPlaceY});
@@ -225,6 +234,7 @@ var DragMixin = {
 			this.targ.removeClass("random").attr("data-points","group" + globals.letterProperties[this.tmpVal.value].point).html(this.tmpVal.value);
 
 		}
+		this.swapped = true;
 
 		globals.canMove = true;
 		

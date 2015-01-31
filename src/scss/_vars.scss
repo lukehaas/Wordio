@@ -1,13 +1,25 @@
 /* COLOURS */
 $white:#FFF;
 
+$z-grid-overlay:1;
+$z-grid-highlight:2;
+$z-grid-message:3;
+$z-game-button:4;
+$z-game-overlay:5;
+$z-pause-menu:7;
+
 
 
 /* FONTS */
 
 $clear-sans-regular: 'clear-sans-regular';
+$righteous-regular: 'righteous-regular';
 @font-face {
   font-family: 'clear-sans-regular';
   src: url('../font/clearsans/WOFF/ClearSans-Regular.woff') format('woff'),
        url('../font/clearsans/TTF/ClearSans-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'righteous-regular';
+  src: url('../font/righteous/Righteous-Regular.ttf') format('truetype');
 }

@@ -61,6 +61,7 @@ run: cordova build <platform>
 
 Add plugins:
 $ cordova plugin add org.apache.cordova.statusbar
+cordova plugin add org.apache.cordova.inappbrowser
 
 
 
