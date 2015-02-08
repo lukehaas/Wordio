@@ -13,11 +13,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 	setup:function() {
 		var tmpl = this.templates.grid;
 		var topBar = this.templates.topBar;
+		var bottomPanel = this.templates.bottomPanel;
 		var pauseMenu = this.templates.pauseMenu;
 
 		this.$el.html(_.template(topBar,{}));
 
 		this.$el.append(_.template(tmpl,{}));
+
+		this.$el.append(_.template(bottomPanel,{}));
 
 		this.$el.append(_.template(pauseMenu,{}));
 
@@ -26,7 +29,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 			var tileSelection = this.templates.tileSelection;
 			
-			this.$el.append(_.template(tileChooseBtn,{}));
+			this.$el.find(".bottom-panel").append(_.template(tileChooseBtn,{}));
 			this.$el.append(_.template(tileSelection,{}));
 		}
 		
@@ -136,7 +139,18 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		}
 	},
 	updateScore:function() {
-		$(".current-score").text(globals.currentScore.get("currentScore"));
+		$(".current-score").removeClass("increase-points");
+		if(globals.currentScore.get("currentScore")>0) {
+			setTimeout(function() {
+				$(".current-score").addClass("increase-points").text(globals.currentScore.get("currentScore"));
+			},0);
+		} else {
+			$(".current-score").text("0");
+		}
+		
+		$(".longest-word .points").text(globals.currentScore.get("longestWord"));
+		$(".chain-word .points").text(globals.currentScore.get("longestChain"));
+		$(".crossover-word .points").text(globals.currentScore.get("crossovers"));
 	},
 	positionTiles:function() {
 		var top = 0;
@@ -219,18 +233,22 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				z = 0;
 			}
 		});
-		$(".top-bar").css({"width":(globals.tileSettings.tileSize*globals.tileSettings.row)+"px"});
+		$(".top-bar,.bottom-panel").css({"width":(globals.tileSettings.tileSize*globals.tileSettings.row)+"px"});
 		$(".grid").css({"width":(globals.tileSettings.tileSize*globals.tileSettings.row)+"px","height":(globals.tileSettings.tileSize*globals.tileSettings.column)+"px"});
 	},
 	updateTime:function() {
 		globals.timeLeft -= 1;
 		
 		$(".time").text(util.getTime());
+		if(globals.timeLeft<11) {
+			$(".time").addClass("final-seconds");
+		}
 		if(globals.timeLeft>0) {
 			globals.mainTimer = setTimeout(function(self) {
 				self.updateTime();
 			},1000,this);
 		} else {
+			$(".time").removeClass("final-seconds");
 			this.gameOver();
 		}
 	},
@@ -239,13 +257,36 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		globals.paused = true;
 
 		var gameOver = this.templates.gameOver;
+		var scoreText = "Score";
+		var score = globals.currentScore.get("currentScore");
+		var scoreClass= "";
 
-		this.$el.append(_.template(gameOver,{score:globals.currentScore.get("currentScore")}));
+		//score = 58;
+		
+		if(score>globals.highScore) {
+			scoreText = "New High Score!";
+			scoreClass = "new-high-score";
+			if(typeof(Storage) !== "undefined") {
+				localStorage.setItem("highScore", score);
+			}
+			util.playSound(3);
+		} else {
+			util.playSound(2);
+		}
+		this.$el.append(_.template(gameOver,{scoreClass:scoreClass,
+			scoreText:scoreText,
+			score:score,
+			longestWord:globals.currentScore.get("longestWord"),
+			longestChain:globals.currentScore.get("longestChain"),
+			crossovers:globals.currentScore.get("crossovers")
+		}));
 
 		$(".game-overlay,.game-over").show();
 		setTimeout(function() {
 			$(".game-overlay,.game-over").addClass("visible");
-
+			if(score>globals.highScore) {
+				util.sparkle($(".new-high-score small,.new-high-score strong"));
+			}
 
 		},10);
 
@@ -514,6 +555,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 					points += globals.letterProperties[foundWords[i].word.charAt(k)].point;
 				}
 				foundWords[i].points = points;
+
 			}
 			console.log(fromDic,wordPos,vertical);
 			//possibley move this to model
@@ -586,7 +628,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		i,k,len,j,row = 5,rowCount = [0,0],
 		mRowCount,l,crossOver = false,
 		word = "",checkForWord = true,qi = 4,
-		self = this,points = 0;
+		self = this,points = 0,wordLength = 0;
 
 		if(fwl>1) {
 			//if words are joined - find cross over number
@@ -599,7 +641,8 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			}
 		}
 		points = foundWords[0].points;
-		$(".top-bar").find(".found-word").removeClass("smaller");
+		$(".top-bar").find(".found-word").removeClass("smaller show-word");
+
 		if(fwl>1) {
 			points += foundWords[1].points;
 			//$(".top-bar").find(".found-word").html("<a href=\"" + globals.wordLookup + foundWords[0].word + "\">" + foundWords[0].word + "</a> & <a href=\"" + globals.wordLookup + foundWords[0].word + "\">" + foundWords[1].word + "</a>");
@@ -607,11 +650,31 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				$(".top-bar").find(".found-word").addClass("smaller");	
 			}
 			$(".top-bar").find(".found-word").text(foundWords[0].word + " & " + foundWords[1].word);
+			wordLength = Math.max(foundWords[0].word.length,foundWords[1].word.length);
+			globals.currentScore.set({crossovers:globals.currentScore.get("crossovers")+1});
 		} else {
 			//$(".top-bar").find(".found-word").html("<a href=\"" + globals.wordLookup + foundWords[0].word + "\">" + foundWords[0].word + "</a>");
 			$(".top-bar").find(".found-word").text(foundWords[0].word);
+			wordLength = foundWords[0].word.length;
 		}
+		setTimeout(function() {
+			$(".top-bar").find(".found-word").addClass("show-word");
+		},10);
+		
+		
 		globals.currentScore.set({currentScore:globals.currentScore.get("currentScore")+points});
+		
+		if(wordLength>globals.currentScore.get("longestWord")) {
+			globals.currentScore.set("longestWord",wordLength);
+		}
+		globals.currentChain+=1;
+		if(false===globals.playerFound) {
+
+			if(globals.currentChain>globals.currentScore.get("longestChain")) {
+				globals.currentScore.set("longestChain",globals.currentChain);
+			}
+		}
+		globals.playerFound = false;
 
 		var pointMessageTop = $(".grid").offset().top+(Math.floor(foundWords[0].pos/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
 		$(".grid-message-points").css({"top":pointMessageTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).text(points);
@@ -967,19 +1030,50 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 	},
 	templates: {
 		grid:'\
-		<div class="grid"><div class="grid-overlay"></div></div><div class="grid-message grid-message-points hidden"></div><a href="#" class="pause-btn">Pause</a>\
+		<div class="grid"><div class="grid-overlay"></div></div><div class="grid-message grid-message-points hidden"></div>\
 		',
 		pauseMenu:'\
-		<div class="pause-menu"><div><h3>Paused</h3><ul><li><a href="#" class="resume-btn">Resume</a></li><li><a href="javascript:location.reload();">Restart</a></li><li><a href="#" class="quit-btn">Quit</a></li></ul></div></div>\
+		<div class="pause-menu"><div><h3>Paused</h3>\
+		<ul>\
+			<li><a href="#" class="resume-btn btn">Resume</a></li>\
+			<li><a href="javascript:location.reload();" class="btn">Restart</a></li>\
+			<li><a href="#" class="quit-btn btn">Quit</a></li>\
+		</ul>\
+		</div></div>\
 		',
 		gameOver:'\
-		<div class="game-over"><div class="inner-container"><div class="score"><%= score %></div><ul><li><a href="#" class="quit-btn">Menu</a></li><li><a href="javascript:location.reload();">New game</a></li></ul></div></div>\
+		<div class="game-over"><div class="inner-container">\
+		<div class="score <%= scoreClass %>"><p><small><%= scoreText %></small></p><p class="final-score"><strong><%= score %></strong></p></div>\
+		<ul class="stats">\
+		<li><span>Longest word: </span><strong><%= longestWord %></strong></li>\
+		<li><span>Longest chain: </span><strong><%= longestChain %></strong></li>\
+		<li><span>No. of crossovers: </span><strong><%= crossovers %></strong></li>\
+		</ul>\
+		<ul class="buttons">\
+		<li><a href="javascript:location.reload();" class="btn">New Game</a></li>\
+		<li><a href="#" class="quit-btn btn">Menu</a></li>\
+		</ul>\
+		<ul class="social">\
+		<li><a href="#" class="facebook icon icon-facebook"><small>Share on Facebook</small></a></li>\
+		<li><a href="#" class="twitter icon icon-twitter"><small>Share on Twitter</small></a></li>\
+		</ul>\
+		</div></div>\
 		',
 		tile:'\
 		<div data-points="<%= pointsGroup %>" class="tile <%= className %>"><%= letter %></div>\
 		',
 		topBar:'\
 		<div class="top-bar"><div class="time"></div><div class="found-word"></div><div class="current-score"></div></div>\
+		',
+		bottomPanel:'\
+		<div class="bottom-panel">\
+		<a href="#" class="pause-btn">Pause</a>\
+		<div class="bonuses">\
+		<div class="longest-word"><span class="points">0</span><span class="text">Longest</span></div>\
+		<div class="chain-word"><span class="points">0</span><span class="text">Chain</span></div>\
+		<div class="crossover-word"><span class="points">0</span><span class="text">Crossovers</span></div>\
+		</div>\
+		</div>\
 		',
 		chooseRandomTileBtn:'\
 		<a href="#" class="choose-tile">?</a>\

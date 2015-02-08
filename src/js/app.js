@@ -73,16 +73,19 @@ globals = {
     debugDropIn:["P","U","T"],
     debugCounter:0,
     found:false,
+    playerFound:false,
+    currentChain:0,
     wordLookup:"http://www.collinsdictionary.com/dictionary/english/",
     currentScore:0,
-    intro:false,
+    audio:true,
     tileSlectionEnabled:false,
     chosenBlank:null,
-    timeLeft:150,
-    //timeLeft:5,
+    //timeLeft:150,
+    timeLeft:5000,
     mainTimer:null,
     paused:false,
-    cssPrefix:""
+    cssPrefix:"",
+    highScore:0
 };
 
 var App = {
@@ -126,6 +129,24 @@ var App = {
 
         util.loadSounds();
         util.setCSSPrefix();
+
+
+
+        if(typeof(Storage) !== "undefined") {
+            if(localStorage.getItem("audioSet")) {
+                
+                if(localStorage.getItem("audioOn")===false) {
+                    globals.audio = false;
+                }
+            } else {
+                localStorage.setItem("audioSet", "true");
+                localStorage.setItem("audioOn", "true");
+            }
+
+            if(localStorage.getItem("highScore")) {
+                globals.highScore = localStorage.getItem("highScore");
+            }
+        }
 
         App.start();
 

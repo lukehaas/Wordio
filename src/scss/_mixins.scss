@@ -41,11 +41,17 @@ background-position:0 0, 25% 25%;*/
 	}
 }*/
 @function darken-or-lighten() {
-	$r:random(15);
+	/*$r:random(15);
 	@if $r <= 5 {
 		@return rgba(0,0,0,(random(3)+1)/100);
 	} @else if $r<=10 {
 		@return rgba(255,255,255,(random(25)+1)/100);
+	} @else {
+		@return transparent;
+	}*/
+	$r:random(10);
+	@if $r <= 8 {
+		@return rgba(255,255,255,(random(30)+5)/100);
 	} @else {
 		@return transparent;
 	}

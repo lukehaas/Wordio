@@ -120,7 +120,8 @@ var DragMixin = {
 						this.currentPlaceX = this.tmpX;
 					}
 				} else {
-					this.handleDragEnd();
+					//this.handleDragEnd();
+					this.dragEnd();
 				}
 			} else {
 				this.y2 = this.targY + (this.pointers(e).y-this.y);
@@ -164,7 +165,8 @@ var DragMixin = {
 
 					}
 				} else {
-					this.handleDragEnd();
+					//this.handleDragEnd();
+					this.dragEnd();
 				}
 			}
 		}
@@ -182,11 +184,12 @@ var DragMixin = {
 			};
 		}
 	},
-	dragEnd: function(e) {
+	dragEnd: function() {
 		
 
 		this.handleDragEnd();
 		if(this.swapped) {
+			this.swapped = false;
 			util.playSound(0);
 		}
 		
@@ -195,6 +198,8 @@ var DragMixin = {
 		if(this.targ) {
 			globals.canMove = false;
 			this.targ.removeClass('top').addClass('mover').attr('id',this.currentID).css({'left':this.currentPlaceX,'top':this.currentPlaceY});
+			globals.playerFound = true;
+			globals.currentChain = 0;
 			this.hasWord(true);
 		}
 		

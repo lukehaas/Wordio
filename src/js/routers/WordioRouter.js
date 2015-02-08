@@ -16,7 +16,8 @@ App.Routers.WordioRouter = Backbone.Router.extend({
 	play: function() {
 		$("body").removeClass("main-menu").addClass("game-screen");
 		util.removeSparkle();
-
+		letterGridView.renderLevel1();
+		/*
 		if(typeof(Storage) !== "undefined") {
 			if(localStorage.getItem("hasPlayed")) {
 				
@@ -28,10 +29,12 @@ App.Routers.WordioRouter = Backbone.Router.extend({
 			}
 		} else {
 			alert("Something has gone very wrong");
-		}
+		}*/
 		
 	},
 	settings: function() {
+		wordioGameView.renderSettingsMenu();
+		util.removeSparkle();
 
 	}
 });
