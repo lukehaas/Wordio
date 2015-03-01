@@ -3,6 +3,7 @@ App.Routers.WordioRouter = Backbone.Router.extend({
 		"":"index",
 		"index":"index",
 		"play":"play",
+		"how-to-play":"howToPlay",
 		"settings":"settings"
 	},
 
@@ -16,7 +17,7 @@ App.Routers.WordioRouter = Backbone.Router.extend({
 	play: function() {
 		$("body").removeClass("main-menu").addClass("game-screen");
 		util.removeSparkle();
-		letterGridView.renderLevel1();
+		letterGridView.renderLevel1(true);
 		/*
 		if(typeof(Storage) !== "undefined") {
 			if(localStorage.getItem("hasPlayed")) {
@@ -31,6 +32,11 @@ App.Routers.WordioRouter = Backbone.Router.extend({
 			alert("Something has gone very wrong");
 		}*/
 		
+	},
+	howToPlay:function() {
+		$("body").removeClass("main-menu").addClass("game-screen");
+		util.removeSparkle();
+		letterGridView.renderHowToPlay();
 	},
 	settings: function() {
 		wordioGameView.renderSettingsMenu();

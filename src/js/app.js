@@ -80,12 +80,16 @@ globals = {
     audio:true,
     tileSlectionEnabled:false,
     chosenBlank:null,
+    purchasedTileChooser:true,
+    tileChoicesRemaining:20,
     //timeLeft:150,
-    timeLeft:5000,
+    timeLeft:15000,
     mainTimer:null,
     paused:false,
     cssPrefix:"",
-    highScore:0
+    highScore:0,
+    moves:0,
+    htpStage:1
 };
 
 var App = {

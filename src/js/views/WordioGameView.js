@@ -55,7 +55,7 @@ App.Views.WordioGameView = Backbone.View.extend({
 		<p class="high-score">High Score: <span><%= highScore %></span></p>\
 		<ul class="menu">\
 			<li><a href="#play" class="btn">New Game</a></li>\
-			<li><a href="" class="btn">How To Play</a></li>\
+			<li><a href="#how-to-play" class="btn">How To Play</a></li>\
 			<li><a href="" class="btn">Leaderboard</a></li>\
 			<li><a href="#settings" class="btn">Settings</a></li>\
 		</ul>\

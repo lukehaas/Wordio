@@ -24,12 +24,12 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 		this.$el.append(_.template(pauseMenu,{}));
 
-		if(1===1) {
+		if(globals.purchasedTileChooser) {
 			var tileChooseBtn = this.templates.chooseRandomTileBtn;
 
 			var tileSelection = this.templates.tileSelection;
 			
-			this.$el.find(".bottom-panel").append(_.template(tileChooseBtn,{}));
+			this.$el.find(".bottom-panel").append(_.template(tileChooseBtn,{"remaining":globals.tileChoicesRemaining}));
 			this.$el.append(_.template(tileSelection,{}));
 		}
 		
@@ -38,40 +38,102 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		globals.currentScore.bind('change', this.updateScore);
 		this.updateScore();
 
+		$(".grid-message").css({"font-size":(globals.tileSettings.tileSize*0.15)+"px"});
 		$(".grid-message-points").css({"font-size":(globals.tileSettings.tileSize*0.3)+"px","width":globals.tileSettings.tileSize*0.5,"height":globals.tileSettings.tileSize*0.5,"line-height":(globals.tileSettings.tileSize*0.4)+"px"});
-
-	},
-	renderIntro:function() {
-		this.setup();
-		var grid = new App.Collections.Grid();
-		grid.bind('add', this.appendLetter);
-
-		var i,
-			introTiles = [
-		"C","A","?","H","P",
-		"M","?","Q","H","T",
-		"A","X","I","E","A",
-		"Q","K","A","O","?",
-		"?","Z","E","L","H",
-		"?","?","I","L","G",
-		"E","J","G","L","?"];
-		for(i = 0;i < (globals.tileSettings.row*globals.tileSettings.column);i++) {
-			globals.letter[i] = new App.Models.Letter();
-			
-			if(introTiles[i]=="?") {
-				globals.letter[i].set({type:'r',value:""});
-			} else {
-				globals.letter[i].set({type:'c',value:introTiles[i]});
-			}
-			grid.add(globals.letter[i]);
-		}
-		this.positionTiles();
-		$("#8,#13,#18,#23,#28").addClass("tmp-bg");
-
-		$(".grid-overlay").addClass("visible").show();
 		
+		//maybe look at changing this - fixes first time play sound issue
+		util.playSound(0);
 	},
-	renderLevel1:function() {
+	renderHowToPlay:function() {
+		globals.htpStage = 1;
+		this.renderLevel1(false);
+
+		
+		globals.canMove = false;
+		globals.paused = true;
+
+		var howToPlayOverlays = this.templates.howToPlay;
+		this.$el.append(_.template(howToPlayOverlays,{}));
+
+		$(".bottom-panel").hide();
+
+
+		$(".how-to-play.icon").css({"font-size":(globals.tileSettings.tileSize*0.6)+"px"});
+
+
+		$(".how-to-play.north-west").css({"left":$(".grid").offset().left+globals.tileSettings.tileSize*0.8});
+		$(".how-to-play.north-east").css({"left":$(".grid").offset().left+globals.tileSettings.tileSize*4});
+
+		$(".htp-time,.htp-score").css({"width":globals.tileSettings.tileSize*3,"font-size":(globals.tileSettings.tileSize*0.3)+"px"});
+		
+		$(".htp-time").css({"left":$(".grid").offset().left+globals.tileSettings.tileSize*0.2});
+		$(".htp-score").css({"right":$(".grid").offset().left+globals.tileSettings.tileSize*0.2});
+
+		$(".htp-play-btn,.htp-next-btn").css({"left":$(".grid").offset().left,"top":globals.tileSettings.tileSize*3.5,"width":$(".grid").width()});
+
+
+		$(".htp-instruction1,.htp-instruction2,.htp-tile-switch").css({"right":$(".grid").offset().left+globals.tileSettings.tileSize*0.2,"left":$(".grid").offset().left+globals.tileSettings.tileSize*0.2,"font-size":(globals.tileSettings.tileSize*0.3)+"px"});
+		//$(".htp-instruction1").css("top",globals.tileSettings.tileSize*0.3);
+		//$(".htp-instruction2").css("top",globals.tileSettings.tileSize*0.3);
+		
+		$(".htp-tile-switch").css({"top":globals.tileSettings.tileSize*5,"height":globals.tileSettings.tileSize*1.6});
+
+		$(".htp-tile-switch").find("div").css({"width":globals.tileSettings.tileSize,"height":globals.tileSettings.tileSize,"font-size":(globals.tileSettings.tileSize*0.48)+"px","line-height":globals.tileSettings.tileSize+"px"});
+
+
+		setTimeout(function() {
+			$(".north-west,.htp-time,.htp-next-btn").css("opacity","1");
+		},500);
+
+	},
+	howToPlayNext:function(e) {
+		e.preventDefault();
+
+		if(globals.htpStage===1) {
+			$(".north-west,.htp-time").css("opacity","0");
+
+			setTimeout(function() {
+				$(".north-east,.htp-score").css("opacity","1");
+
+			},200);
+
+		} else if(globals.htpStage===2) {
+			$(".north-east,.htp-score").css("opacity","0");
+
+
+			setTimeout(function() {
+				
+				//$(".htp-next-btn").css("top",globals.tileSettings.tileSize*4);
+
+				$(".htp-instruction1").css("opacity","1");
+
+			},200);
+
+
+		} else if(globals.htpStage===3) {
+			$(".htp-instruction1,.htp-next-btn").css("opacity","0");
+			
+			setTimeout(function() {
+				$(".htp-next-btn").remove();
+				$(".htp-tile-switch").find("div").addClass("ready");
+				$(".htp-play-btn,.htp-instruction2,.htp-tile-switch").css("opacity","1");
+			},200);
+
+		}
+
+		globals.htpStage += 1;
+	},
+	stopHowToPlayAndPlay:function(e) {
+		$(".how-to-play").css("opacity","0");
+
+		setTimeout(function() {
+			$(".how-to-play").remove();
+			$(".bottom-panel").show();
+		},500);
+
+		this.resumeGame(e);
+	},
+	renderLevel1:function(start) {
 		this.setup();
 		var grid = new App.Collections.Grid();
 		grid.bind('add', this.appendLetter);
@@ -99,9 +161,12 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		setTimeout(function() {
 			$(".tile").css({"transform":"rotate3d(0,1,0,0deg)"});
 		},10);
-		setTimeout(function(self) {
-			self.updateTime();
-		},1500,this);
+		if(start) {
+			setTimeout(function(self) {
+				self.updateTime();
+			},1500,this);
+		}
+		
 	},
 	assignLetters: function(i) {
 		if(globals.debug===1) {
@@ -147,10 +212,15 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		} else {
 			$(".current-score").text("0");
 		}
+		if($(".current-score").hasClass("large-score")===false) {
+			if(globals.currentScore.get("currentScore")>999) {
+				$(".current-score").addClass("large-score");
+			}
+		}
 		
-		$(".longest-word .points").text(globals.currentScore.get("longestWord"));
-		$(".chain-word .points").text(globals.currentScore.get("longestChain"));
-		$(".crossover-word .points").text(globals.currentScore.get("crossovers"));
+		//$(".longest-word .points").text(globals.currentScore.get("words"));
+		//$(".chain-word .points").text(globals.currentScore.get("longestChain"));
+		//$(".crossover-word .points").text(globals.currentScore.get("crossovers"));
 	},
 	positionTiles:function() {
 		var top = 0;
@@ -276,7 +346,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		this.$el.append(_.template(gameOver,{scoreClass:scoreClass,
 			scoreText:scoreText,
 			score:score,
-			longestWord:globals.currentScore.get("longestWord"),
+			words:globals.currentScore.get("words"),
 			longestChain:globals.currentScore.get("longestChain"),
 			crossovers:globals.currentScore.get("crossovers")
 		}));
@@ -649,37 +719,94 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			if((foundWords[0].word.length + foundWords[1].word.length) > 10) {
 				$(".top-bar").find(".found-word").addClass("smaller");	
 			}
-			$(".top-bar").find(".found-word").text(foundWords[0].word + " & " + foundWords[1].word);
+			$(".top-bar").find(".found-word").html(foundWords[0].word + " <span>&</span> " + foundWords[1].word);
 			wordLength = Math.max(foundWords[0].word.length,foundWords[1].word.length);
 			globals.currentScore.set({crossovers:globals.currentScore.get("crossovers")+1});
+
+			globals.currentScore.set("words",globals.currentScore.get("words")+2);
+
 		} else {
 			//$(".top-bar").find(".found-word").html("<a href=\"" + globals.wordLookup + foundWords[0].word + "\">" + foundWords[0].word + "</a>");
 			$(".top-bar").find(".found-word").text(foundWords[0].word);
 			wordLength = foundWords[0].word.length;
+			globals.currentScore.set("words",globals.currentScore.get("words")+1);
 		}
 		setTimeout(function() {
 			$(".top-bar").find(".found-word").addClass("show-word");
 		},10);
 		
 		
-		globals.currentScore.set({currentScore:globals.currentScore.get("currentScore")+points});
 		
-		if(wordLength>globals.currentScore.get("longestWord")) {
-			globals.currentScore.set("longestWord",wordLength);
+		
+		
+		var pointMessageTop = $(".grid").offset().top+(Math.floor(foundWords[0].pos/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+		var minusOneTop = $(".grid").offset().top+(Math.floor((foundWords[0].pos-5)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+		var plusOneTop = $(".grid").offset().top+(Math.floor((foundWords[0].pos+5)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+
+		var belowWord;
+
+		var bySide;
+		if(foundWords[0].vertical===true) {
+			if((foundWords[0].pos+(foundWords[0].word.length*5))%7===0) {
+				belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+(foundWords[0].word.length*4))/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+			} else {
+				belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+(foundWords[0].word.length*5))/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+			}
+			
+
+			if((foundWords[0].pos+1)%5===0 || (foundWords[0].pos+2)%5===0) {
+				//to left
+				bySide = $(".grid").offset().left+(((foundWords[0].pos-2)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
+			} else {
+				//to right
+				bySide = $(".grid").offset().left+(((foundWords[0].pos+1)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
+			}
+
+		} else {
+			belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+5)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+			
+			if((foundWords[0].pos+foundWords[0].word.length)%5===0) {
+				bySide = $(".grid").offset().left+((((foundWords[0].pos+foundWords[0].word.length)-5)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
+			} else {
+				bySide = $(".grid").offset().left+(((foundWords[0].pos+2)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
+			}
+			
 		}
+
+		$(".grid-message-points").css({"top":pointMessageTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).text(points);
+
+		if(wordLength>2) {
+			$(".grid-message-letter-bonus").css({"top":plusOneTop,"left":bySide});
+			$(".grid-message-letter-bonus").find(".text").html("<span>" + wordLength + "</span><small>Letter<br/>Word</small>");
+			$(".grid-message-letter-bonus").find(".bonus").text("+" + (wordLength*2));
+
+			points += (wordLength*2);
+		}
+		//if(globals.moves>6) {
+			//might bring this back oneday
+			//$(".grid-message-move-penalty").css({"top":pointMessageTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).text(globals.moves + " Move Penalty");
+		//}
+		
+		if(fwl>1) {
+			$(".grid-message-pair").css({"top":minusOneTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).find(".bonus").text("+10");
+			points += 10;
+		}
+		
 		globals.currentChain+=1;
 		if(false===globals.playerFound) {
 
 			if(globals.currentChain>globals.currentScore.get("longestChain")) {
 				globals.currentScore.set("longestChain",globals.currentChain);
 			}
+			$(".grid-message-chain").css({"top":belowWord,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)});
+			$(".grid-message-chain").find(".text").html("<span>" + globals.currentChain + "</span><small>word<br/>chain</small>");
+			$(".grid-message-chain").find(".bonus").text("+" + (globals.currentChain*5));
+
+			points += (globals.currentChain*5);
+			
 		}
-		globals.playerFound = false;
-
-		var pointMessageTop = $(".grid").offset().top+(Math.floor(foundWords[0].pos/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
-		$(".grid-message-points").css({"top":pointMessageTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).text(points);
-
 		
+		globals.currentScore.set({currentScore:globals.currentScore.get("currentScore")+points});
 		
 		for(;p<fwl;p++) {
 			i = k = foundWords[p].pos;
@@ -703,6 +830,24 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			var deferred = $.Deferred();
 			$(".grid-message-points").removeClass("hidden");
 			$(".grid-message-points").css("top",pointMessageTop-(globals.tileSettings.tileSize));
+
+			if(wordLength>2) {
+				$(".grid-message-letter-bonus").removeClass("hidden");
+			}
+			//gone for now
+			//if(globals.moves>6) {
+				//$(".grid-message-move-penalty").removeClass("hidden");
+				//globals.moves = 0;
+			//}
+
+			if(fwl>1) {
+				$(".grid-message-pair").removeClass("hidden");
+			}
+
+			if(false===globals.playerFound) {
+				$(".grid-message-chain").removeClass("hidden");
+			}
+			globals.playerFound = false;
 			deferred.resolve();
 
 			return deferred.promise();
@@ -717,7 +862,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		{
 			action:function() {
 			var deferred = $.Deferred();
-			
+			$(".grid-message").addClass("hidden");
 			$(".grid-overlay").removeClass("visible");
 			for(p = 0;p<fwl;p++) {
 				i = k = foundWords[p].pos;
@@ -973,20 +1118,22 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 	showTileSelection: function(e) {
 		e.preventDefault();
 		
-		if(false===globals.tileSlectionEnabled) {
-			globals.tileSlectionEnabled = true;
+		if(globals.tileChoicesRemaining>0) {
+			if(false===globals.tileSlectionEnabled) {
+				globals.tileSlectionEnabled = true;
 
-			globals.canMove = false;
+				globals.canMove = false;
 
-			$(".random").addClass("selectable-tile").off("click touchstart").on("click touchstart",function() {
-				$(".tile-selection").css({"width":(globals.tileSettings.tileSize*4),"font-size":(globals.tileSettings.tileSize*0.25)+"px"}).show();
-				globals.chosenBlank = $(this);
+				$(".random").addClass("selectable-tile").off("click touchstart").on("click touchstart",function() {
+					$(".tile-selection").css({"width":(globals.tileSettings.tileSize*4),"font-size":(globals.tileSettings.tileSize*0.25)+"px"}).show();
+					globals.chosenBlank = $(this);
 
-			});
+				});
 
-			$(".grid-overlay").addClass("visible").show();
-		} else {
-			this.hideTileSelection();
+				$(".grid-overlay").addClass("visible").show();
+			} else {
+				this.hideTileSelection();
+			}
 		}
 
 	},
@@ -1016,6 +1163,10 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 		this.hideTileSelection();
 
+		globals.tileChoicesRemaining -= 1;
+
+		$(".choose-tile").find(".choices-remaining").text(globals.tileChoicesRemaining);
+
 		//new word check
 		this.hasWord(true);
 	},
@@ -1027,10 +1178,22 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		this.events['click .resume-btn'] = 'resumeGame';
 
 		this.events['click .quit-btn'] = 'quitGame';
+
+
+		this.events['click .htp-play-btn a'] = 'stopHowToPlayAndPlay';
+
+		this.events['click .htp-next-btn a'] = 'howToPlayNext';
 	},
 	templates: {
 		grid:'\
-		<div class="grid"><div class="grid-overlay"></div></div><div class="grid-message grid-message-points hidden"></div>\
+		<div class="grid">\
+		<div class="grid-overlay"></div>\
+		</div>\
+		<div class="grid-message grid-message-letter-bonus hidden"><div class="text"></div><div class="bonus"></div></div>\
+		<div class="grid-message grid-message-pair hidden"><div class="text">Pair!</div><div class="bonus"></div></div>\
+		<div class="grid-message grid-message-chain hidden"><div class="text"></div><div class="bonus"></div></div>\
+		<div class="grid-message grid-message-move-penalty hidden"><div class="text"></div><div class="bonus"></div></div>\
+		<div class="grid-message grid-message-points hidden"><div class="bonus"></div></div>\
 		',
 		pauseMenu:'\
 		<div class="pause-menu"><div><h3>Paused</h3>\
@@ -1045,9 +1208,9 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		<div class="game-over"><div class="inner-container">\
 		<div class="score <%= scoreClass %>"><p><small><%= scoreText %></small></p><p class="final-score"><strong><%= score %></strong></p></div>\
 		<ul class="stats">\
-		<li><span>Longest word: </span><strong><%= longestWord %></strong></li>\
+		<li><span>Words: </span><strong><%= words %></strong></li>\
 		<li><span>Longest chain: </span><strong><%= longestChain %></strong></li>\
-		<li><span>No. of crossovers: </span><strong><%= crossovers %></strong></li>\
+		<li><span>Total crossovers: </span><strong><%= crossovers %></strong></li>\
 		</ul>\
 		<ul class="buttons">\
 		<li><a href="javascript:location.reload();" class="btn">New Game</a></li>\
@@ -1065,21 +1228,64 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		topBar:'\
 		<div class="top-bar"><div class="time"></div><div class="found-word"></div><div class="current-score"></div></div>\
 		',
-		bottomPanel:'\
+		bottomPanelOld:'\
 		<div class="bottom-panel">\
 		<a href="#" class="pause-btn">Pause</a>\
 		<div class="bonuses">\
-		<div class="longest-word"><span class="points">0</span><span class="text">Longest</span></div>\
-		<div class="chain-word"><span class="points">0</span><span class="text">Chain</span></div>\
-		<div class="crossover-word"><span class="points">0</span><span class="text">Crossovers</span></div>\
+			<div class="bonus-item longest-word">\
+				<span class="points">0</span>\
+				<div class="char-word">\
+					<span class="char char1">W</span>\
+					<span class="char char2">o</span>\
+					<span class="char char3">r</span>\
+					<span class="char char4">d</span>\
+					<span class="char char5">s</span>\
+				</div>\
+			</div>\
+			<div class="bonus-item chain-word">\
+				<span class="points">0</span>\
+				<div class="char-word">\
+					<span class="char char1">C</span>\
+					<span class="char char2">h</span>\
+					<span class="char char3">a</span>\
+					<span class="char char4">i</span>\
+					<span class="char char5">n</span>\
+				</div>\
+			</div>\
+			<div class="bonus-item crossover-word">\
+				<span class="points">0</span>\
+				<div class="char-word">\
+					<span class="char char1">P</span>\
+					<span class="char char2">a</span>\
+					<span class="char char3">i</span>\
+					<span class="char char4">r</span>\
+					<span class="char char5">s</span>\
+				</div>\
+			</div>\
 		</div>\
+		</div>\
+		',
+		bottomPanel:'\
+		<div class="bottom-panel">\
+		<a href="#" class="pause-btn">Pause</a>\
 		</div>\
 		',
 		chooseRandomTileBtn:'\
-		<a href="#" class="choose-tile">?</a>\
+		<a href="#" class="choose-tile">?<div class="choices-remaining"><%= remaining %></div></a>\
 		',
 		tileSelection:'\
 		<div class="tile-selection"><div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div><div>I</div><div>J</div><div>K</div><div>L</div><div>M</div><div>N</div><div>O</div><div>P</div><div>Q</div><div>R</div><div>S</div><div>T</div><div>U</div><div>V</div><div>W</div><div>X</div><div>Y</div><div>Z</div></div>\
+		',
+		howToPlay:'\
+		<div class="how-to-play icon icon-arrow-up2 north-west"></div>\
+		<div class="how-to-play icon icon-arrow-up2 north-east"></div>\
+		<div class="how-to-play htp-time">A game lasts 150 seconds.</div>\
+		<div class="how-to-play htp-score">Your score is recorded here.</div>\
+		<div class="how-to-play htp-next-btn"><a href="#" class="btn">Next</a></div>\
+		<div class="how-to-play htp-play-btn"><a href="#" class="btn">Play</a></div>\
+		<div class="how-to-play htp-instruction1">Drag tiles around the grid to form words and score points.</div>\
+		<div class="how-to-play htp-instruction2">Switch mystery tiles with letter tiles to get the next letter in the alphabet.</div>\
+		<div class="how-to-play htp-tile-switch"><div class="letter1">A</div><div class="letter2">B</div><div class="mystery"></div></div>\
 		'
 	}
 }));

@@ -191,8 +191,8 @@ var DragMixin = {
 		if(this.swapped) {
 			this.swapped = false;
 			util.playSound(0);
+			globals.move+=1;
 		}
-		
 	},
 	handleDragEnd:function() {
 		if(this.targ) {

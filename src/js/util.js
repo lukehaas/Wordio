@@ -101,6 +101,7 @@ var util = {
 		return parseInt(globals.timeLeft/60) + ":" + (globals.timeLeft%60 < 10 ? "0"+globals.timeLeft%60 : globals.timeLeft%60);
 	},
 	sounds:[{name:"click",buffer:null},{name:"found-word",buffer:null},{name:"game-over",buffer:null},{name:"new-high-score",buffer:null}],
+	soundsLoaded:0,
 	loadSounds:function() {
 		window.AudioContext = window.AudioContext || window.webkitAudioContext;
 		util.soundContext = new AudioContext();
@@ -117,7 +118,7 @@ var util = {
 		// Decode asynchronously
 		request.onload = function() {
 			util.soundContext.decodeAudioData(request.response, function(buffer) {
-				
+				util.soundsLoaded+=1;
 				util.sounds[i].buffer = buffer;
 
 				if(i<util.sounds.length-1) {
@@ -131,7 +132,7 @@ var util = {
 
 	},
 	playSound:function(i) {
-		if(globals.audio) {
+		if(globals.audio && util.soundsLoaded===util.sounds.length) {
 			var source = util.soundContext.createBufferSource(); // creates a sound source
 			source.buffer = util.sounds[i].buffer;                    // tell the source which sound to play
 			source.connect(util.soundContext.destination);       // connect the source to the context's destination (the speakers)
