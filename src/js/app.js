@@ -61,7 +61,7 @@ globals = {
     },
     letter:[],
     canMove:true,
-    debug:3,    //- 1 is full debug including tiles, 2 is just control over drop-in tiles, 3 is currently standard and availale for realocation
+    debug:false,    //- 1 is full debug including tiles, 2 is just control over drop-in tiles, 3 is currently standard and availale for realocation
     debugTiles:[
     "?","?","X","X","X",
     "X","X","G","X","X",
@@ -80,16 +80,19 @@ globals = {
     audio:true,
     tileSlectionEnabled:false,
     chosenBlank:null,
-    purchasedTileChooser:true,
-    tileChoicesRemaining:20,
-    //timeLeft:150,
-    timeLeft:15000,
+    purchasedTileChooser:false,
+    tileChoicesRemaining:0,
+    timeLeft:150,
+    //timeLeft:10,
     mainTimer:null,
     paused:false,
     cssPrefix:"",
     highScore:0,
     moves:0,
-    htpStage:1
+    htpStage:1,
+    press:"click",
+    android:false,
+    web: true,
 };
 
 var App = {
@@ -109,17 +112,25 @@ var App = {
     // Bind any events that are required on startup. Common events are:
     // 'load', 'deviceready', 'offline', and 'online'.
     bindEvents: function() {
+         window.addEventListener('load',this.windowLoad, false);
+         document.addEventListener('contextmenu', function(event) { event.preventDefault() });
+
         document.addEventListener('deviceready', this.onDeviceReady, false);
         if (!window.cordova) {
             $(this.onDeviceReady);
         }
+        document.addEventListener("backbutton", this.onBackKeyDown, false);
     },
     // deviceready Event Handler
     //
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
-        
+
+        if ("ontouchstart" in window || navigator.msMaxTouchPoints) {
+            //globals.press = "touchstart";
+        }
+
         var w = parseInt($(".app").width()/globals.tileSettings.row);
         var h = parseInt(($(".app").height()*0.75)/globals.tileSettings.column);
 
@@ -135,25 +146,70 @@ var App = {
         util.setCSSPrefix();
 
 
-
         if(typeof(Storage) !== "undefined") {
+            /*this is just here to avoid fallout from the bug fix - can remove this in future */
+            if(localStorage.getItem("tileChooser")) {
+                if(parseInt(localStorage.getItem("tileChooser")>0)) {
+                    globals.purchasedTileChooser = true;
+                    globals.tileChoicesRemaining = parseInt(localStorage.getItem("tileChooser"));
+                }
+            }
+
             if(localStorage.getItem("audioSet")) {
                 
-                if(localStorage.getItem("audioOn")===false) {
+                if(localStorage.getItem("audioOn")==="false") {
                     globals.audio = false;
                 }
             } else {
-                localStorage.setItem("audioSet", "true");
-                localStorage.setItem("audioOn", "true");
+                localStorage.setItem("audioSet", true);
+                localStorage.setItem("audioOn", true);
             }
 
             if(localStorage.getItem("highScore")) {
                 globals.highScore = localStorage.getItem("highScore");
             }
+            if(localStorage.getItem("tileChooserPurchased")) {
+
+                globals.purchasedTileChooser = true;
+                globals.tileChoicesRemaining = parseInt(localStorage.getItem("tileChooser"));
+            }
         }
+        if(typeof(gamecenter) !== "undefined") {
+            gamecenter.auth();
+        } else if(typeof(googleplaygame) !== "undefined") {
+            globals.android = true;
+            googleplaygame.auth();
+        }
+        
 
         App.start();
 
+        
+    },
+    windowLoad: function() {
+
+        setTimeout(function() {
+            $(".app").removeClass("hide");
+        },500);
+        
+
+        setTimeout(function() {
+            $(".app").addClass("started");
+            
+        },1500);
+
+
+    },
+    onBackKeyDown: function() {
+
+        if(location.hash==="#play" || location.hash==="#how-to-play") {
+            $(".app").addClass("hide");
+            location.hash = "#index";
+
+            location.reload();
+        } else {
+            window.history.back();
+        }
     }
 
 };

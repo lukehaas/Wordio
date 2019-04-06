@@ -16,6 +16,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		var bottomPanel = this.templates.bottomPanel;
 		var pauseMenu = this.templates.pauseMenu;
 
+
 		this.$el.html(_.template(topBar,{}));
 
 		this.$el.append(_.template(tmpl,{}));
@@ -28,11 +29,11 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			var tileChooseBtn = this.templates.chooseRandomTileBtn;
 
 			var tileSelection = this.templates.tileSelection;
-			
+
 			this.$el.find(".bottom-panel").append(_.template(tileChooseBtn,{"remaining":globals.tileChoicesRemaining}));
 			this.$el.append(_.template(tileSelection,{}));
 		}
-		
+
 
 		globals.currentScore = new App.Models.Stats();
 		globals.currentScore.bind('change', this.updateScore);
@@ -40,15 +41,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 		$(".grid-message").css({"font-size":(globals.tileSettings.tileSize*0.15)+"px"});
 		$(".grid-message-points").css({"font-size":(globals.tileSettings.tileSize*0.3)+"px","width":globals.tileSettings.tileSize*0.5,"height":globals.tileSettings.tileSize*0.5,"line-height":(globals.tileSettings.tileSize*0.4)+"px"});
-		
-		//maybe look at changing this - fixes first time play sound issue
-		util.playSound(0);
+
+		util.playFirstSound();
 	},
 	renderHowToPlay:function() {
 		globals.htpStage = 1;
 		this.renderLevel1(false);
 
-		
+
 		globals.canMove = false;
 		globals.paused = true;
 
@@ -65,7 +65,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		$(".how-to-play.north-east").css({"left":$(".grid").offset().left+globals.tileSettings.tileSize*4});
 
 		$(".htp-time,.htp-score").css({"width":globals.tileSettings.tileSize*3,"font-size":(globals.tileSettings.tileSize*0.3)+"px"});
-		
+
 		$(".htp-time").css({"left":$(".grid").offset().left+globals.tileSettings.tileSize*0.2});
 		$(".htp-score").css({"right":$(".grid").offset().left+globals.tileSettings.tileSize*0.2});
 
@@ -75,8 +75,8 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		$(".htp-instruction1,.htp-instruction2,.htp-tile-switch").css({"right":$(".grid").offset().left+globals.tileSettings.tileSize*0.2,"left":$(".grid").offset().left+globals.tileSettings.tileSize*0.2,"font-size":(globals.tileSettings.tileSize*0.3)+"px"});
 		//$(".htp-instruction1").css("top",globals.tileSettings.tileSize*0.3);
 		//$(".htp-instruction2").css("top",globals.tileSettings.tileSize*0.3);
-		
-		$(".htp-tile-switch").css({"top":globals.tileSettings.tileSize*5,"height":globals.tileSettings.tileSize*1.6});
+
+		$(".htp-tile-switch").css({"top":globals.tileSettings.tileSize*5.2,"height":globals.tileSettings.tileSize*1.6});
 
 		$(".htp-tile-switch").find("div").css({"width":globals.tileSettings.tileSize,"height":globals.tileSettings.tileSize,"font-size":(globals.tileSettings.tileSize*0.48)+"px","line-height":globals.tileSettings.tileSize+"px"});
 
@@ -102,7 +102,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 
 			setTimeout(function() {
-				
+
 				//$(".htp-next-btn").css("top",globals.tileSettings.tileSize*4);
 
 				$(".htp-instruction1").css("opacity","1");
@@ -112,7 +112,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 		} else if(globals.htpStage===3) {
 			$(".htp-instruction1,.htp-next-btn").css("opacity","0");
-			
+
 			setTimeout(function() {
 				$(".htp-next-btn").remove();
 				$(".htp-tile-switch").find("div").addClass("ready");
@@ -145,7 +145,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		}
 		//check for words and regenerate grid if needed
 		while(this.hasWord(false)) {
-			console.log("word check");
+
 			for(i = 0;i < (globals.tileSettings.row*globals.tileSettings.column);i++) {
 				this.assignLetters(i);
 			}
@@ -166,7 +166,16 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				self.updateTime();
 			},1500,this);
 		}
-		
+
+	},
+	renderLevel2:function(start) {
+
+
+		this.renderLevel1(false);
+
+		var inGameMenu = this.templates.inGameMenu;
+
+		this.$el.append(_.template(inGameMenu,{ className: globals.web ? 'hidden' : '' }));
 	},
 	assignLetters: function(i) {
 		if(globals.debug===1) {
@@ -184,7 +193,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			}
 
 		} else {
-			
+
 			this.rand = Math.floor((Math.random()*100)+1);
 
 			if(this.rand>=60 && this.rand<=90) {
@@ -213,11 +222,13 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			$(".current-score").text("0");
 		}
 		if($(".current-score").hasClass("large-score")===false) {
-			if(globals.currentScore.get("currentScore")>999) {
+			if(globals.currentScore.get("currentScore")>999 && globals.currentScore.get("currentScore")<10000) {
 				$(".current-score").addClass("large-score");
+			} else if(globals.currentScore.get("currentScore")>9999) {
+				$(".current-score").addClass("very-large-score");
 			}
 		}
-		
+
 		//$(".longest-word .points").text(globals.currentScore.get("words"));
 		//$(".chain-word .points").text(globals.currentScore.get("longestChain"));
 		//$(".crossover-word .points").text(globals.currentScore.get("crossovers"));
@@ -256,7 +267,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 		transform[15] = {"-webkit-transform":"translate("+(globals.tileSettings.tileSize)+"px,0) rotate3d(0,1,0,90deg)","transform-origin":"right center"};
 		transform[16] = {"-webkit-transform":"rotate3d(0,1,0,90deg)","transform-origin":"right center"};
-		
+
 		transform[17] = {"-webkit-transform":"rotate3d(0,0,0,0)"};
 		transform[18] = {"-webkit-transform":"rotate3d(0,1,0,90deg)","transform-origin":"left center"};
 		transform[19] = {"-webkit-transform":"translate(-"+(globals.tileSettings.tileSize)+"px,0) rotate3d(0,1,0,90deg)","transform-origin":"left center"};
@@ -286,10 +297,10 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 		transform[33] = {"-webkit-transform":"translate(0,-"+(globals.tileSettings.tileSize*2)+"px) rotate3d(1,0,0,90deg) rotate3d(0,0,1,45deg)","transform-origin":"left top"};
 		transform[34] = {"-webkit-transform":"translate(-"+(globals.tileSettings.tileSize)+"px,-"+(globals.tileSettings.tileSize*2)+"px) rotate3d(1,0,0,90deg) rotate3d(0,0,1,45deg)","transform-origin":"left top"};
-		
+
 
 		$(".tile").each(function(i) {
-		
+
 			$(this).attr('id',i).addClass("mover").css({"font-size":(globals.tileSettings.tileSize*0.48)+"px","line-height":globals.tileSettings.tileSize+"px","width":globals.tileSettings.tileSize+"px","height":globals.tileSettings.tileSize+"px","top":top+"px","left":left+"px"});
 			$(this).css(transform[i]);
 
@@ -308,7 +319,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 	},
 	updateTime:function() {
 		globals.timeLeft -= 1;
-		
+
 		$(".time").text(util.getTime());
 		if(globals.timeLeft<11) {
 			$(".time").addClass("final-seconds");
@@ -332,17 +343,99 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		var scoreClass= "";
 
 		//score = 58;
-		
+
 		if(score>globals.highScore) {
 			scoreText = "New High Score!";
 			scoreClass = "new-high-score";
 			if(typeof(Storage) !== "undefined") {
 				localStorage.setItem("highScore", score);
+				localStorage.setItem("tileChooser", globals.tileChoicesRemaining);
+			}
+			var data = {
+			    leaderboardId: "board1",
+			    score: score
+			};
+			if(typeof(gamecenter) !== "undefined") {
+
+				gamecenter.submitScore(function(){}, function(){}, data);
+			} else if(typeof(googleplaygame) !== "undefined") {
+				data.leaderboardId = "CgkIgdCh9vMbEAIQAA";
+
+				googleplaygame.submitScore(data);
 			}
 			util.playSound(3);
 		} else {
 			util.playSound(2);
 		}
+
+		var achievement = {};
+		if(typeof(gamecenter) !== "undefined") {
+			achievement.percent = "100";
+
+			if(globals.currentScore.get("words")>=100) {
+				achievement.achievementId = "100words";
+
+				gamecenter.reportAchievement(function() {}, function() {}, achievement);
+
+			} else if(globals.currentScore.get("words")>=90) {
+				achievement.achievementId = "90words";
+
+				gamecenter.reportAchievement(function() {}, function() {}, achievement);
+
+			} else if(globals.currentScore.get("words")>=80) {
+				achievement.achievementId = "80words";
+
+				gamecenter.reportAchievement(function() {}, function() {}, achievement);
+			}
+
+
+			if(globals.currentScore.get("sevenLetters")===true) {
+				achievement.achievementId = "7letters";
+
+				gamecenter.reportAchievement(function() {}, function() {}, achievement);
+			}
+			if(globals.currentScore.get("sixLetters")===true) {
+				achievement.achievementId = "6letters";
+
+				gamecenter.reportAchievement(function() {}, function() {}, achievement);
+			}
+			if(globals.currentScore.get("fiveLetters")===true) {
+				achievement.achievementId = "5letters";
+
+				gamecenter.reportAchievement(function() {}, function() {}, achievement);
+			}
+
+		} else if(typeof(googleplaygame) !== "undefined") {
+
+
+			if(globals.currentScore.get("words")>=100) {
+
+				googleplaygame.unlockAchievement({achievementId:"CgkIgdCh9vMbEAIQBw"});
+
+			} else if(globals.currentScore.get("words")>=90) {
+
+				googleplaygame.unlockAchievement({achievementId:"CgkIgdCh9vMbEAIQBg"});
+
+			} else if(globals.currentScore.get("words")>=80) {
+				googleplaygame.unlockAchievement({achievementId:"CgkIgdCh9vMbEAIQBQ"});
+
+			}
+
+
+			if(globals.currentScore.get("sevenLetters")===true) {
+				googleplaygame.unlockAchievement({achievementId:"CgkIgdCh9vMbEAIQBA"});
+			}
+			if(globals.currentScore.get("sixLetters")===true) {
+				googleplaygame.unlockAchievement({achievementId:"CgkIgdCh9vMbEAIQAw"});
+			}
+			if(globals.currentScore.get("fiveLetters")===true) {
+				googleplaygame.unlockAchievement({achievementId:"CgkIgdCh9vMbEAIQAg"});
+			}
+
+		}
+
+
+
 		this.$el.append(_.template(gameOver,{scoreClass:scoreClass,
 			scoreText:scoreText,
 			score:score,
@@ -359,6 +452,21 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			}
 
 		},10);
+
+	},
+	menuGame:function(e) {
+		e.preventDefault();
+
+		globals.canMove = false;
+		globals.paused = true;
+
+		$(".game-overlay,.in-game-menu").show();
+
+		setTimeout(function() {
+			$(".game-overlay,.in-game-menu").addClass("visible");
+		},10);
+
+		$(".grid").addClass("paused");
 
 	},
 	pauseGame:function(e) {
@@ -381,23 +489,23 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		e.preventDefault();
 		if(globals.timeLeft>0) {
 			globals.paused = false;
-			$(".game-overlay,.pause-menu").removeClass("visible");
+			$(".game-overlay,.pause-menu,.in-game-menu").removeClass("visible");
 			$(".grid").removeClass("paused");
 			globals.canMove = true;
 			this.hasWord(true);
 			setTimeout(function(self) {
-				$(".game-overlay,.pause-menu").hide();
-				self.updateTime();
-				
+				$(".game-overlay,.pause-menu,.in-game-menu").hide();
+				if($('.endless-mode').length<1) {
+					self.updateTime();
+				}
 			},300,this);
-			
 		}
 	},
 	quitGame:function(e) {
 		e.preventDefault();
 		$(".game-overlay,.pause-menu").removeClass("visible");
 
-
+		$(".app").addClass("hide");
 		location.hash = "#index";
 
 		location.reload();
@@ -430,7 +538,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		this.$el.find(".grid").append(_.template(tmpl,{letter:letter.get("value"),className:className,pointsGroup:pointsGroup}));
 	},
 	updateLetter:function(letter) {
-		console.log(letter);
+		//console.log(letter);
 	},
 	hasWord:function(canHandleFound) {
 		globals.canMove = false;
@@ -470,14 +578,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		//7 is number of rows
 		for(;i<35;i++) {
 			z++;
-			
+
 			if(globals.letter[i].get('type')=="r") {
 				if(z<4) {
 					//j++;
 					j += word.length+1;
 					//console.log("tt" + j);
 					word = "";
-					
+
 				} else {
 					canCompleteLine = false;
 				}
@@ -485,9 +593,9 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				word += globals.letter[i].get('value');
 				//console.log(globals.letter[i].get('value'));
 			}
-			
+
 			if((i+1)%5===0) {
-				
+
 				canCompleteLine = true;
 				z = p = 0;
 
@@ -598,7 +706,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				}
 				if(canHandleFound===false) {
 					if(fromDic.length>0) {
-						
+
 						globals.canMove = true;
 						return true;
 					}
@@ -606,7 +714,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				word = "";
 				z = j = 0;
 				k++;
-				
+
 			} else {
 				k += 5;
 			}
@@ -617,21 +725,21 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 			globals.found = true;
 
-			
+
 			for(i = 0;i < foundWords.length;i++) {
 				points = 0;
 				for(k = 0;k<foundWords[i].word.length;k++) {
-					
+
 					points += globals.letterProperties[foundWords[i].word.charAt(k)].point;
 				}
 				foundWords[i].points = points;
 
 			}
-			console.log(fromDic,wordPos,vertical);
+			//console.log(fromDic,wordPos,vertical);
 			//possibley move this to model
-			
+
 			$(".grid").addClass("shift");
-			console.log(foundWords);
+			//console.log(foundWords);
 			//this.handleFound(wordPos,fromDic.length,vertical);
 
 			$(".grid-overlay").show();
@@ -640,24 +748,24 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 				self.handleFound(foundWords);
 			},10,this);
 
-			
+
 		} else {
 			globals.canMove = true;
 
 			if(globals.found===true) {
-				
+
 				//setTimeout(function() {
 					$(".grid-overlay").hide();
 				//},300);
 			}
 			globals.found = false;
 		}
-		
+
 		return false;
 
 	},
 	checkForWord:function(word) {
-		
+
 		var letter = word.charAt(0),
 			c,
 			i = 0,
@@ -678,7 +786,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		}
 		return longestWord;
 	},
-	
+
 	handleFound:function(foundWords) {
 	//handleFound:function(pos,len,vertical) {
 		/*
@@ -698,12 +806,13 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		i,k,len,j,row = 5,rowCount = [0,0],
 		mRowCount,l,crossOver = false,
 		word = "",checkForWord = true,qi = 4,
-		self = this,points = 0,wordLength = 0;
+		self = this,points = 0,wordLength = 0,bonus = [];
+
 
 		if(fwl>1) {
 			//if words are joined - find cross over number
 			crossOver = foundWords[1].pos+(Math.ceil((foundWords[0].pos-foundWords[1].pos)/5)*5);
-			
+
 
 			if(foundWords[1].pos>(foundWords[0].pos+(foundWords[0].len-1)) || crossOver<0 || crossOver>(((foundWords[1].len-1)*5)+foundWords[1].pos) || (foundWords[0].pos+(foundWords[0].len-1))<crossOver) {
 				crossOver = false;
@@ -711,13 +820,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			}
 		}
 		points = foundWords[0].points;
+
 		$(".top-bar").find(".found-word").removeClass("smaller show-word");
 
 		if(fwl>1) {
 			points += foundWords[1].points;
 			//$(".top-bar").find(".found-word").html("<a href=\"" + globals.wordLookup + foundWords[0].word + "\">" + foundWords[0].word + "</a> & <a href=\"" + globals.wordLookup + foundWords[0].word + "\">" + foundWords[1].word + "</a>");
 			if((foundWords[0].word.length + foundWords[1].word.length) > 10) {
-				$(".top-bar").find(".found-word").addClass("smaller");	
+				$(".top-bar").find(".found-word").addClass("smaller");
 			}
 			$(".top-bar").find(".found-word").html(foundWords[0].word + " <span>&</span> " + foundWords[1].word);
 			wordLength = Math.max(foundWords[0].word.length,foundWords[1].word.length);
@@ -734,93 +844,112 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		setTimeout(function() {
 			$(".top-bar").find(".found-word").addClass("show-word");
 		},10);
-		
-		
-		
-		
-		
+
 		var pointMessageTop = $(".grid").offset().top+(Math.floor(foundWords[0].pos/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+		$(".grid-message-points").css({"top":pointMessageTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).text(points);
+
 		var minusOneTop = $(".grid").offset().top+(Math.floor((foundWords[0].pos-5)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
 		var plusOneTop = $(".grid").offset().top+(Math.floor((foundWords[0].pos+5)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
 
 		var belowWord;
 
 		var bySide;
+		var standardLeft = $(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
+
 		if(foundWords[0].vertical===true) {
 			if((foundWords[0].pos+(foundWords[0].word.length*5))%7===0) {
 				belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+(foundWords[0].word.length*4))/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
 			} else {
 				belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+(foundWords[0].word.length*5))/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
 			}
-			
+
 
 			if((foundWords[0].pos+1)%5===0 || (foundWords[0].pos+2)%5===0) {
 				//to left
 				bySide = $(".grid").offset().left+(((foundWords[0].pos-2)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
+
+				standardLeft = $(".grid").offset().left+(((foundWords[0].pos-1)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
+
 			} else {
 				//to right
 				bySide = $(".grid").offset().left+(((foundWords[0].pos+1)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
 			}
 
 		} else {
-			belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+5)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
-			
+
+
 			if((foundWords[0].pos+foundWords[0].word.length)%5===0) {
 				bySide = $(".grid").offset().left+((((foundWords[0].pos+foundWords[0].word.length)-5)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
 			} else {
 				bySide = $(".grid").offset().left+(((foundWords[0].pos+2)-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize);
 			}
-			
+
+			if(foundWords[0].pos>29) {
+				plusOneTop = $(".grid").offset().top+(Math.floor((foundWords[0].pos+2)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+				belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+5)/5)*globals.tileSettings.tileSize);
+
+			} else {
+				belowWord = $(".grid").offset().top+(Math.floor((foundWords[0].pos+5)/5)*globals.tileSettings.tileSize)+globals.tileSettings.tileSize*0.5;
+			}
+
 		}
 
-		$(".grid-message-points").css({"top":pointMessageTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).text(points);
 
-		if(wordLength>2) {
+
+		if(wordLength>4) {
 			$(".grid-message-letter-bonus").css({"top":plusOneTop,"left":bySide});
 			$(".grid-message-letter-bonus").find(".text").html("<span>" + wordLength + "</span><small>Letter<br/>Word</small>");
 			$(".grid-message-letter-bonus").find(".bonus").text("+" + (wordLength*2));
 
 			points += (wordLength*2);
+
+			if(wordLength===5) {
+				globals.currentScore.set("fiveLetters",true);
+			} else if(wordLength===6) {
+				globals.currentScore.set("sixLetters",true);
+			} else if(wordLength===7) {
+				globals.currentScore.set("sevenLetters",true);
+			}
 		}
 		//if(globals.moves>6) {
 			//might bring this back oneday
 			//$(".grid-message-move-penalty").css({"top":pointMessageTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).text(globals.moves + " Move Penalty");
 		//}
-		
+
 		if(fwl>1) {
 			$(".grid-message-pair").css({"top":minusOneTop,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)}).find(".bonus").text("+10");
 			points += 10;
 		}
-		
+
 		globals.currentChain+=1;
 		if(false===globals.playerFound) {
 
 			if(globals.currentChain>globals.currentScore.get("longestChain")) {
 				globals.currentScore.set("longestChain",globals.currentChain);
 			}
-			$(".grid-message-chain").css({"top":belowWord,"left":$(".grid").offset().left+((foundWords[0].pos-(Math.floor(foundWords[0].pos/5)*5))*globals.tileSettings.tileSize)});
+			$(".grid-message-chain").css({"top":belowWord,"left":standardLeft});
 			$(".grid-message-chain").find(".text").html("<span>" + globals.currentChain + "</span><small>word<br/>chain</small>");
 			$(".grid-message-chain").find(".bonus").text("+" + (globals.currentChain*5));
 
 			points += (globals.currentChain*5);
-			
+
 		}
-		
+
 		globals.currentScore.set({currentScore:globals.currentScore.get("currentScore")+points});
-		
+
 		for(;p<fwl;p++) {
 			i = k = foundWords[p].pos;
 			len = foundWords[p].len+i;
 			rowCount[p] = Math.floor(i/5);
-			
-			for(;i<len;i++) {	
+
+			for(;i<len;i++) {
 				if(foundWords[p].vertical===true) {
 					$("#"+k).removeClass("mover").addClass("tmp-bg");
 
 					k+=5;
 				} else {
 					$("#"+i).removeClass("mover").addClass("tmp-bg");
-					
+
 				}
 			}
 		}
@@ -831,8 +960,10 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			$(".grid-message-points").removeClass("hidden");
 			$(".grid-message-points").css("top",pointMessageTop-(globals.tileSettings.tileSize));
 
-			if(wordLength>2) {
+			if(wordLength>4) {
 				$(".grid-message-letter-bonus").removeClass("hidden");
+
+				bonus.push(".grid-message-letter-bonus");
 			}
 			//gone for now
 			//if(globals.moves>6) {
@@ -842,12 +973,20 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 			if(fwl>1) {
 				$(".grid-message-pair").removeClass("hidden");
+
+				bonus.push(".grid-message-pair");
 			}
 
 			if(false===globals.playerFound) {
 				$(".grid-message-chain").removeClass("hidden");
+
+				bonus.push(".grid-message-chain");
 			}
 			globals.playerFound = false;
+
+			if(bonus.length) {
+				util.sparkle($(bonus.join()));
+			}
 			deferred.resolve();
 
 			return deferred.promise();
@@ -855,6 +994,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		{action:function() {
 			var deferred = $.Deferred();
 			$(".grid-message-points").addClass("hidden");
+
 			deferred.resolve();
 
 			return deferred.promise();
@@ -864,6 +1004,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			var deferred = $.Deferred();
 			$(".grid-message").addClass("hidden");
 			$(".grid-overlay").removeClass("visible");
+			util.removeSparkle();
 			for(p = 0;p<fwl;p++) {
 				i = k = foundWords[p].pos;
 				len = foundWords[p].len+i;
@@ -900,7 +1041,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 						if(foundWords[p].vertical===true) {
 
 							$("#"+k).css("top",((l*globals.tileSettings.tileSize)*-1)).removeClass("random shrink tmp-bg");
-							
+
 							$("#"+k).attr("id",(k-mRowCount)+"tmp");
 
 
@@ -912,7 +1053,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 								$("#"+i).attr("id",(i-mRowCount)+"tmp");
 							}
-							
+
 
 						}
 					}
@@ -946,7 +1087,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 							if(foundWords[p].vertical===true) {
 								k-=5;
 								dRow = (l*5)+k;
-								
+
 								$("#"+k).css("top",(Math.floor(dRow/5))*globals.tileSettings.tileSize).attr("id",dRow);
 
 								tmp[k] = globals.letter[dRow];
@@ -955,11 +1096,11 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 								globals.letter[k] = tmp[k];
 							} else {
-								
+
 								i = foundWords[p].pos;
 								k = i - dRow;
 								for(;i<len;i++) {
-									//if theres a cross over - all tiles above the cross over should be handled by the vertical sweep?	
+									//if theres a cross over - all tiles above the cross over should be handled by the vertical sweep?
 									if(i!==crossOver) {
 										$("#"+k).css("top",((Math.floor(k/5)+1)*globals.tileSettings.tileSize)).attr("id",k+5);
 										//if first sweep - store in temp
@@ -983,7 +1124,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 						//the time to go red and shrink - plus small delay
 					}
 				}
-				
+
 				deferred.resolve();
 				return deferred.promise();
 			},
@@ -993,7 +1134,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		queue[qi++] = {
 			action:function() {
 				var deferred = $.Deferred();
-				
+
 				for(p = 0;p<fwl;p++) {
 
 					while(checkForWord) {
@@ -1007,7 +1148,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 						for(;i<len;i++) {
 
 							if(foundWords[p].vertical===true) {
-								
+
 								j = k-mRowCount;
 
 								self.assignLetters(j);
@@ -1018,7 +1159,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 								}
 
 								k+=5;
-								
+
 							} else {
 								//console.log(i + "gg " + (i-mRowCount));
 								if(i!==crossOver) {
@@ -1029,24 +1170,24 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 									} else {
 										word += globals.letter[(i-mRowCount)].get("value");
 									}
-									
+
 								}
 							}
 						}
 						checkForWord = false;
 						//check word in dic
 						//checkForWord = false if no word
-						console.log("new tiles " + word);
+						//console.log("new tiles " + word);
 						while(word.length>2) {
 							if(self.checkForWord(word).length) {
 								//keep the loop going if theres a word
 								checkForWord = true;
-								console.log("there was a word in the new tiles");
+								//console.log("there was a word in the new tiles");
 								word = "";
 							} else {
 								word = word.substring(1);
 							}
-							
+
 						}
 
 					}
@@ -1057,9 +1198,9 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 					mRowCount = rowCount[p]*5;
 					for(;i<len;i++) {
 						if(foundWords[p].vertical===true) {
-								
+
 							j = k-mRowCount;
-							console.log("J2 " + j);
+							//console.log("J2 " + j);
 							$("#"+j+"tmp").html(globals.letter[j].get("value"));
 
 							if(globals.letter[j].get("type")=="r") {
@@ -1093,7 +1234,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 			},
 			time:50,args:[self,p,fwl,checkForWord,i,k,len,foundWords,mRowCount,rowCount,word,j,crossOver]
 		};
-		
+
 
 		queue[qi++] = {
 			action:function() {
@@ -1117,7 +1258,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 	},
 	showTileSelection: function(e) {
 		e.preventDefault();
-		
+
 		if(globals.tileChoicesRemaining>0) {
 			if(false===globals.tileSlectionEnabled) {
 				globals.tileSlectionEnabled = true;
@@ -1147,14 +1288,14 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		globals.tileSlectionEnabled = false;
 	},
 	chooseTile: function(e) {
-		
+
 		var letter = $(e.currentTarget).text();
 
 		var pos = globals.alphabet.indexOf(letter);
-		
+
 
 		var newLetter = {"value":globals.alphabet[pos],"type":globals.letterProperties[globals.alphabet[pos]].type};
-		
+
 		globals.chosenBlank.removeClass("random selectable-tile").off("click touchstart").attr("data-points","group"+globals.letterProperties[newLetter.value].point).text(letter);
 
 		globals.letter[globals.chosenBlank.attr("id")].set(newLetter);
@@ -1167,22 +1308,42 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 
 		$(".choose-tile").find(".choices-remaining").text(globals.tileChoicesRemaining);
 
+		localStorage.setItem("tileChooser", globals.tileChoicesRemaining);
+
 		//new word check
 		this.hasWord(true);
 	},
+	shareOnFacebook:function(e) {
+		e.preventDefault();
+		var shareText = 'I just scored ' + globals.currentScore.get("currentScore") + ' on Wordio';
+		window.plugins.socialsharing.shareViaFacebookWithPasteMessageHint(shareText, null /* img */, "http://lukehaas.me/games/wordio", 'Paste it in', function() {}, function(errormsg){alert(errormsg);});
+	},
+	shareOnTwitter:function(e) {
+		e.preventDefault();
+		var shareText = 'I just scored ' + globals.currentScore.get("currentScore") + ' on Wordio';
+		window.plugins.socialsharing.shareViaTwitter(shareText, null /* img */, 'http://lukehaas.me/games/wordio');
+	},
 	additionalEvents: function() {
 
-		this.events['click .choose-tile'] = 'showTileSelection';
-		this.events['click .tile-selection div'] = 'chooseTile';
-		this.events['click .pause-btn'] = 'pauseGame';
-		this.events['click .resume-btn'] = 'resumeGame';
+		this.events[globals.press+' .choose-tile'] = 'showTileSelection';
+		this.events[globals.press+' .tile-selection div'] = 'chooseTile';
+		this.events[globals.press+' .pause-btn'] = 'pauseGame';
 
-		this.events['click .quit-btn'] = 'quitGame';
+		this.events[globals.press+' .in-game-menu-btn'] = 'menuGame';
+		this.events[globals.press+' .resume-btn'] = 'resumeGame';
+
+		this.events[globals.press+' .quit-btn'] = 'quitGame';
 
 
-		this.events['click .htp-play-btn a'] = 'stopHowToPlayAndPlay';
+		this.events[globals.press+' .htp-play-btn a'] = 'stopHowToPlayAndPlay';
 
-		this.events['click .htp-next-btn a'] = 'howToPlayNext';
+		this.events[globals.press+' .htp-next-btn a'] = 'howToPlayNext';
+
+		this.events[globals.press+' .facebook'] = 'shareOnFacebook';
+
+		this.events[globals.press+' .twitter'] = 'shareOnTwitter';
+
+
 	},
 	templates: {
 		grid:'\
@@ -1204,13 +1365,22 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		</ul>\
 		</div></div>\
 		',
+		inGameMenu:'\
+		<div class="in-game-menu"><div><h3>Menu</h3>\
+		<ul>\
+			<li><a href="#" class="resume-btn btn">Resume</a></li>\
+			<li><a href="javascript:location.reload();" class="btn">Restart</a></li>\
+			<li class="<%= className %>"><a href="#" class="quit-btn btn">Quit</a></li>\
+		</ul>\
+		</div></div>\
+		',
 		gameOver:'\
 		<div class="game-over"><div class="inner-container">\
 		<div class="score <%= scoreClass %>"><p><small><%= scoreText %></small></p><p class="final-score"><strong><%= score %></strong></p></div>\
 		<ul class="stats">\
 		<li><span>Words: </span><strong><%= words %></strong></li>\
 		<li><span>Longest chain: </span><strong><%= longestChain %></strong></li>\
-		<li><span>Total crossovers: </span><strong><%= crossovers %></strong></li>\
+		<li><span>Pairs: </span><strong><%= crossovers %></strong></li>\
 		</ul>\
 		<ul class="buttons">\
 		<li><a href="javascript:location.reload();" class="btn">New Game</a></li>\
@@ -1268,6 +1438,7 @@ App.Views.LetterGridView = Backbone.View.extend(_.extend({},DragMixin,{
 		bottomPanel:'\
 		<div class="bottom-panel">\
 		<a href="#" class="pause-btn">Pause</a>\
+		<a href="#" class="in-game-menu-btn">Menu</a>\
 		</div>\
 		',
 		chooseRandomTileBtn:'\

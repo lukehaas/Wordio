@@ -1,5 +1,6 @@
 var util = {
 	sparkleTimer:null,
+	sparkleImg:[],
 	queueHandler:function() {
 		var queue = arguments[0],
 			qi = arguments[1];
@@ -14,9 +15,11 @@ var util = {
 	},
 	removeSparkle:function() {
 		clearTimeout(util.sparkleTimer);
-		$(".sparkle").remove();
+		//$(".sparkle").remove();
+		$(".sparkle").hide();
 	},
 	sparkle:function(elem) {
+		$(".sparkle").show();
 		var i = 0,
 			z = 0,
 			img = [],
@@ -38,44 +41,46 @@ var util = {
 			y2[z] = y1[z]+$(elem[z]).height();
 		}
 		z = 0;
+
 		(function addSparkle(undefined) {
 			
-			if(img[i]===undefined) {
+			if(util.sparkleImg[i]===undefined) {
 
 				//img[i] = document.createElement("IMG");
-				img[i] = new Image();
+				util.sparkleImg[i] = new Image();
 				
-				img[i].width = 35;
-				img[i].height = 35;
+				util.sparkleImg[i].width = 35;
+				util.sparkleImg[i].height = 35;
 
-				img[i].id = "sparkle"+i;
-				img[i].src = "img/sparkle.svg?t=" + new Date().getTime();
+				util.sparkleImg[i].id = "sparkle"+i;
+				util.sparkleImg[i].src = "img/sparkle.svg?t=" + new Date().getTime();
 
-				img[i].onload = function() {
+				util.sparkleImg[i].onload = function() {
 					
 					//document.body.appendChild(this);
 					$(".app").append(this);
 				};
 				
 			} else {
-				img[i].style.display = "none";
-				img[i].src = "img/sparkle.svg?t=" + new Date().getTime();
-				img[i].onload = function() {
+				util.sparkleImg[i].style.display = "none";
+				util.sparkleImg[i].src = "img/sparkle.svg?t=" + new Date().getTime();
+				util.sparkleImg[i].onload = function() {
+
 					this.style.display = "block";
 				};
 			}
 			
-			img[i].style.left = ((Math.random() * (x2[z]-x1[z])) + x1[z]) + "px";
-			img[i].style.top = ((Math.random() * (y2[z]-y1[z])) + y1[z]) + "px";
+			util.sparkleImg[i].style.left = ((Math.random() * (x2[z]-x1[z])) + x1[z]) + "px";
+			util.sparkleImg[i].style.top = ((Math.random() * (y2[z]-y1[z])) + y1[z]) + "px";
 
 			decider = parseInt((Math.random() * 4)+1);
 
 			if(decider==2) {
-				img[i].className = "sparkle small-sparkle1";
+				util.sparkleImg[i].className = "sparkle small-sparkle1";
 			} else if(decider==3) {
-				img[i].className = "sparkle small-sparkle2";
+				util.sparkleImg[i].className = "sparkle small-sparkle2";
 			} else {
-				img[i].className = "sparkle";
+				util.sparkleImg[i].className = "sparkle";
 			}
 			
 
@@ -105,7 +110,7 @@ var util = {
 	loadSounds:function() {
 		window.AudioContext = window.AudioContext || window.webkitAudioContext;
 		util.soundContext = new AudioContext();
-
+		
 		
 		util.requestSound(0);
 
@@ -124,18 +129,42 @@ var util = {
 				if(i<util.sounds.length-1) {
 					i+=1;
 					util.requestSound(i);
+
 				}
 				
 			});
 		};
+
 		request.send();
 
 	},
 	playSound:function(i) {
 		if(globals.audio && util.soundsLoaded===util.sounds.length) {
+
 			var source = util.soundContext.createBufferSource(); // creates a sound source
+			var gainNode = util.soundContext.createGain();
+			source.connect(gainNode);
 			source.buffer = util.sounds[i].buffer;                    // tell the source which sound to play
-			source.connect(util.soundContext.destination);       // connect the source to the context's destination (the speakers)
+			
+			//source.connect(util.soundContext.destination);       // connect the source to the context's destination (the speakers)
+			
+
+			gainNode.connect(util.soundContext.destination);
+			source.start(0);
+		}
+	},
+	playFirstSound:function() {
+		
+
+		if(globals.audio && util.soundsLoaded===util.sounds.length) {
+			var source = util.soundContext.createBufferSource(); // creates a sound source
+			var gainNode = util.soundContext.createGain();
+			source.connect(gainNode);
+			gainNode.gain.value = 0;
+			source.buffer = util.sounds[0].buffer;                    // tell the source which sound to play
+			
+			gainNode.connect(util.soundContext.destination); 
+			
 			source.start(0);
 		}
 	},

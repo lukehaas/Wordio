@@ -26,10 +26,10 @@ var DragMixin = {
 			return false;
 		}
 		this.handleDragEnd();
-		
+
 		this.ended = false;
 		this.swapped = false;
-		
+
 		this.targ = $(e.target);
 
 		if(this.targ.hasClass('tile')) {
@@ -44,8 +44,8 @@ var DragMixin = {
 			this.targX = this.currentPlaceX = (this.currentID-(Math.floor(this.currentID/5)*5))*globals.tileSettings.tileSize;
 			this.targY = this.currentPlaceY = Math.floor(this.currentID/5)*globals.tileSettings.tileSize;
 
-
-			if(e.originalEvent.hasOwnProperty('touches')) {
+			// was using hasOwnProperty here
+			if(e.originalEvent.touches) {
 				this.x = e.originalEvent.touches[0].pageX;
 				this.y = e.originalEvent.touches[0].pageY;
 				this.touch = true;
@@ -55,12 +55,12 @@ var DragMixin = {
 			}
 
 		} else {
-			
+
 			this.dragReset();
 		}
 	},
 	dragMove: function(e) {
-		
+
 		if(globals.canMove===false || this.started===false) {
 			return false;
 		}
@@ -96,7 +96,7 @@ var DragMixin = {
 							this.swapee = $("#"+this.tmpID);
 
 							this.tmpX = this.currentPlaceX + globals.tileSettings.tileSize;
-							
+
 						} else {
 							this.tmpID = this.currentID-1;
 
@@ -110,7 +110,7 @@ var DragMixin = {
 
 
 						this.swapee.css('left',this.currentPlaceX).attr('id',this.currentID);
-						
+
 
 						this.swapValues();
 
@@ -141,7 +141,7 @@ var DragMixin = {
 							this.swapee = $("#"+this.tmpID);
 
 							this.tmpY = this.currentPlaceY + globals.tileSettings.tileSize;
-							
+
 						} else {
 							this.tmpID = this.currentID-5;
 
@@ -177,20 +177,21 @@ var DragMixin = {
 				x:e.originalEvent.touches[0].pageX,
 				y:e.originalEvent.touches[0].pageY
 			};
-		} else {
-			return {
-				x:e.pageX,
-				y:e.pageY
-			};
 		}
+		return {
+			x:e.pageX,
+			y:e.pageY
+		};
 	},
 	dragEnd: function() {
-		
-
 		this.handleDragEnd();
 		if(this.swapped) {
 			this.swapped = false;
-			util.playSound(0);
+			setTimeout(function() {
+				util.playSound(0);
+			},200);
+
+
 			globals.move+=1;
 		}
 	},
@@ -202,7 +203,7 @@ var DragMixin = {
 			globals.currentChain = 0;
 			this.hasWord(true);
 		}
-		
+
 		this.ended = true;
 		this.started = false;
 
@@ -213,7 +214,7 @@ var DragMixin = {
 		this.x = this.y = this.targX = this.targY = this.dFromPlace = this.currentPlaceX = this.currentPlaceY = 0;
 	},
 	swapValues: function() {
-		
+
 		this.tmpVal = globals.letter[this.currentID];
 
 		globals.letter[this.currentID] = globals.letter[this.tmpID];
@@ -242,7 +243,7 @@ var DragMixin = {
 		this.swapped = true;
 
 		globals.canMove = true;
-		
+
 	},
 	events: {
 		'touchstart .tile':'dragStart',

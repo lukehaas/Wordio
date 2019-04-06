@@ -3,3 +3,4 @@ _build/
 .sass-cache/
 build/
 node_modules/
+android-signed/

@@ -44,7 +44,7 @@ module.exports = function(grunt) {
 			options:{
 				multistr:true
 			},
-			all: ['Gruntfile.js', 'src/js/**/*.js']
+			all: ['./Gruntfile.js', './src/js/**/*.js']
 		},
 		svgmin:{
 			options:{},
@@ -83,7 +83,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
   	grunt.registerTask('style', ['sass']);
-  	grunt.registerTask('js', ['jshint','concat','uglify']);
+  	grunt.registerTask('js', ['concat','uglify']);
   	grunt.registerTask('build', ['style','js']);
 
   	grunt.registerTask('default', ['svgmin','copy','style','js','watch']);
